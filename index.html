@@ -118,6 +118,28 @@
             border-color: #dc3545;
         }
         
+        .url-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .url-input.valid {
+            border-color: #28a745;
+        }
+        
+        .url-input.invalid {
+            border-color: #dc3545;
+        }
+        
         .file-input {
             width: 100%;
             padding: 15px;
@@ -137,6 +159,7 @@
             display: flex;
             gap: 15px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
         
         .btn {
@@ -168,6 +191,15 @@
             background: #5a6268;
         }
         
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
         .message {
             padding: 15px;
             border-radius: 10px;
@@ -185,6 +217,12 @@
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
         
         .features {
@@ -217,6 +255,40 @@
             line-height: 1.6;
         }
         
+        .input-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 3px;
+        }
+        
+        .input-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .input-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .input-method {
+            display: none;
+        }
+        
+        .input-method.active {
+            display: block;
+        }
+        
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -228,6 +300,10 @@
             
             .buttons {
                 flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
             }
         }
     </style>
@@ -247,14 +323,33 @@
             
             <div id="json-to-excel" class="converter-section active">
                 <h2>Конвертация JSON в Excel</h2>
-                <div class="input-group">
-                    <label>Введите JSON данные, например:</label>
-                    <textarea class="json-input" id="jsonInput" placeholder='[
+                
+                <div class="input-tabs">
+                    <button class="input-tab active" onclick="switchInputMethod('manual', this)">Ввести вручную</button>
+                    <button class="input-tab" onclick="switchInputMethod('url', this)">Загрузить по ссылке</button>
+                </div>
+                
+                <div id="manual-input" class="input-method active">
+                    <div class="input-group">
+                        <label>Введите JSON данные, например:</label>
+                        <textarea class="json-input" id="jsonInput" placeholder='[
   {"name": "Иван Петров", "age": 30, "city": "Москва", "salary": 75000},
   {"name": "Мария Иванова", "age": 25, "city": "Санкт-Петербург", "salary": 65000},
   {"name": "Алексей Сидоров", "age": 35, "city": "Новосибирск", "salary": 80000}
 ]'></textarea>
+                    </div>
                 </div>
+                
+                <div id="url-input" class="input-method">
+                    <div class="input-group">
+                        <label>Введите ссылку на JSON файл:</label>
+                        <input type="url" class="url-input" id="jsonUrl" placeholder="https://example.com/data.json">
+                    </div>
+                    <div class="buttons">
+                        <button class="btn btn-info" onclick="loadJsonFromUrl()">🔗 Загрузить JSON</button>
+                    </div>
+                </div>
+                
                 <div class="buttons">
                     <button class="btn btn-primary" onclick="convertJsonToExcel()">📊 Конвертировать в Excel</button>
                     <button class="btn btn-secondary" onclick="clearJsonInput()">🗑️ Очистить</button>
@@ -307,12 +402,96 @@
             document.getElementById(mode).classList.add('active');
         }
 
+        function switchInputMethod(method, element) {
+            // Переключение методов ввода - ИСПРАВЛЕНО!
+            document.querySelectorAll('.input-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.input-method').forEach(section => section.classList.remove('active'));
+            
+            element.classList.add('active');
+            document.getElementById(method + '-input').classList.add('active');
+        }
+
         function validateJson(jsonString) {
             try {
                 const parsed = JSON.parse(jsonString);
                 return { valid: true, data: parsed };
             } catch (e) {
                 return { valid: false, error: e.message };
+            }
+        }
+
+        function validateUrl(url) {
+            try {
+                new URL(url);
+                return url.startsWith('http://') || url.startsWith('https://');
+            } catch {
+                return false;
+            }
+        }
+
+        async function loadJsonFromUrl() {
+            const urlInput = document.getElementById('jsonUrl');
+            const messageDiv = document.getElementById('jsonMessage');
+            const jsonTextarea = document.getElementById('jsonInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showMessage(messageDiv, 'Пожалуйста, введите ссылку на JSON файл', 'error');
+                return;
+            }
+
+            if (!validateUrl(url)) {
+                showMessage(messageDiv, 'Пожалуйста, введите корректную ссылку (должна начинаться с http:// или https://)', 'error');
+                urlInput.classList.add('invalid');
+                return;
+            }
+
+            urlInput.classList.remove('invalid');
+            urlInput.classList.add('valid');
+
+            showMessage(messageDiv, 'Загружаю JSON данные...', 'info');
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // Попробуем все равно распарсить как JSON
+                    console.warn('Content-Type не указывает на JSON, но попробуем распарсить');
+                }
+
+                const jsonText = await response.text();
+                const validation = validateJson(jsonText);
+
+                if (!validation.valid) {
+                    throw new Error('Полученные данные не являются корректным JSON: ' + validation.error);
+                }
+
+                // Переключаемся на ручной ввод и вставляем данные
+                const manualTab = document.querySelector('.input-tab[onclick*="manual"]');
+                switchInputMethod('manual', manualTab);
+
+                jsonTextarea.value = JSON.stringify(validation.data, null, 2);
+                jsonTextarea.classList.add('valid');
+
+                showMessage(messageDiv, `JSON данные успешно загружены с ${url}`, 'success');
+
+            } catch (error) {
+                console.error('Ошибка загрузки JSON:', error);
+                urlInput.classList.add('invalid');
+                
+                let errorMessage = 'Ошибка загрузки JSON: ';
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Не удается получить доступ к ссылке. Возможные причины: CORS политика, неверная ссылка, или сервер недоступен.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showMessage(messageDiv, errorMessage, 'error');
             }
         }
 
@@ -443,6 +622,8 @@
         function clearJsonInput() {
             document.getElementById('jsonInput').value = '';
             document.getElementById('jsonInput').classList.remove('valid', 'invalid');
+            document.getElementById('jsonUrl').value = '';
+            document.getElementById('jsonUrl').classList.remove('valid', 'invalid');
             document.getElementById('jsonMessage').style.display = 'none';
         }
 
@@ -459,6 +640,22 @@
             if (jsonText) {
                 const validation = validateJson(jsonText);
                 if (validation.valid) {
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                }
+            } else {
+                this.classList.remove('valid', 'invalid');
+            }
+        });
+
+        // Валидация URL в реальном времени
+        document.getElementById('jsonUrl').addEventListener('input', function() {
+            const url = this.value.trim();
+            if (url) {
+                if (validateUrl(url)) {
                     this.classList.remove('invalid');
                     this.classList.add('valid');
                 } else {

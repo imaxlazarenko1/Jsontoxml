@@ -1,16 +1,333 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Бесплатный онлайн конвертер JSON в Excel и обратно. Быстрая конвертация без лимитов, безопасная обработка данных в браузере." />
-    <meta name="keywords" content="JSON, Excel, конвертер, XLSX, онлайн, бесплатно" />
-    <title>JSON ↔ Excel Конвертер | Бесплатная конвертация без лимитов</title>
-    <script type="module" crossorigin src="/assets/index-l-KZcPsT.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-B0FHbMdJ.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>JSON ↔ Excel Конвертер</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+      <style>
+                * {
+                              margin: 0;
+                              padding: 0;
+                              box-sizing: border-box;
+                }
+
+                body {
+                              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                              min-height: 100vh;
+                              color: #333;
+                }
+
+                .container {
+                              max-width: 1200px;
+                              margin: 0 auto;
+                              padding: 20px;
+                }
+
+                .header {
+                              text-align: center;
+                              color: white;
+                              margin-bottom: 40px;
+                }
+
+                .header h1 {
+                              font-size: 3rem;
+                              margin-bottom: 10px;
+                              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+
+                .header p {
+                              font-size: 1.2rem;
+                              opacity: 0.9;
+                }
+
+                .converter-card {
+                              background: white;
+                              border-radius: 20px;
+                              padding: 40px;
+                              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                              margin-bottom: 40px;
+                }
+
+                .tabs {
+                              display: flex;
+                              margin-bottom: 30px;
+                              border-radius: 10px;
+                              overflow: hidden;
+                              background: #f8f9fa;
+                }
+
+                .tab {
+                              flex: 1;
+                              padding: 15px 20px;
+                              background: #f8f9fa;
+                              border: none;
+                              cursor: pointer;
+                              font-size: 1.1rem;
+                              font-weight: 600;
+                              transition: all 0.3s ease;
+                }
+
+                .tab.active {
+                              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                              color: white;
+                }
+
+                .tab-content {
+                              display: none;
+                }
+
+                .tab-content.active {
+                              display: block;
+                }
+
+                .upload-area {
+                              border: 3px dashed #ddd;
+                              border-radius: 15px;
+                              padding: 40px;
+                              text-align: center;
+                              margin-bottom: 20px;
+                              transition: all 0.3s ease;
+                              cursor: pointer;
+                }
+
+                .upload-area:hover {
+                              border-color: #667eea;
+                              background: #f8f9ff;
+                }
+
+                .upload-area.dragover {
+                              border-color: #667eea;
+                              background: #f0f4ff;
+                }
+
+                .file-input {
+                              display: none;
+                }
+
+                .upload-icon {
+                              font-size: 3rem;
+                              color: #667eea;
+                              margin-bottom: 15px;
+                }
+
+                .textarea {
+                              width: 100%;
+                              min-height: 200px;
+                              padding: 20px;
+                              border: 2px solid #e1e5e9;
+                              border-radius: 10px;
+                              font-family: 'Monaco', 'Menlo', monospace;
+                              font-size: 14px;
+                              resize: vertical;
+                              margin-bottom: 20px;
+                }
+
+                .textarea:focus {
+                              outline: none;
+                              border-color: #667eea;
+                }
+
+                .btn {
+                              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                              color: white;
+                              border: none;
+                              padding: 15px 30px;
+                              border-radius: 10px;
+                              font-size: 1.1rem;
+                              font-weight: 600;
+                              cursor: pointer;
+                              transition: all 0.3s ease;
+                              margin: 5px;
+                }
+
+                .btn:hover {
+                              transform: translateY(-2px);
+                              box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+                }
+
+                .btn:disabled {
+                              opacity: 0.6;
+                              cursor: not-allowed;
+                              transform: none;
+                }
+
+                .preview {
+                              background: #f8f9fa;
+                              border-radius: 10px;
+                              padding: 20px;
+                              margin-top: 20px;
+                              max-height: 300px;
+                              overflow: auto;
+                }
+
+                .preview table {
+                              width: 100%;
+                              border-collapse: collapse;
+                }
+
+                .preview th,
+                .preview td {
+                              border: 1px solid #ddd;
+                              padding: 8px;
+                              text-align: left;
+                }
+
+                .preview th {
+                              background: #667eea;
+                              color: white;
+                }
+
+                .error {
+                              background: #fee;
+                              color: #c33;
+                              padding: 15px;
+                              border-radius: 10px;
+                              margin: 10px 0;
+                              border-left: 4px solid #c33;
+                }
+
+                .success {
+                              background: #efe;
+                              color: #363;
+                              padding: 15px;
+                              border-radius: 10px;
+                              margin: 10px 0;
+                              border-left: 4px solid #363;
+                }
+
+                .features {
+                              display: grid;
+                              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                              gap: 30px;
+                              margin-top: 40px;
+                }
+
+                .feature {
+                              background: white;
+                              padding: 30px;
+                              border-radius: 15px;
+                              text-align: center;
+                              box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                }
+
+                .feature-icon {
+                              font-size: 3rem;
+                              color: #667eea;
+                              margin-bottom: 20px;
+                }
+
+                .feature h3 {
+                              margin-bottom: 15px;
+                              color: #333;
+                }
+
+                .feature p {
+                              color: #666;
+                              line-height: 1.6;
+                }
+
+                @media (max-width: 768px) {
+                              .header h1 {
+                                                font-size: 2rem;
+                              }
+
+                              .converter-card {
+                                                padding: 20px;
+                              }
+
+                              .tabs {
+                                                flex-direction: column;
+                              }
+                }
+            </style>
   </head>
   <body>
-    <div id="root"></div>
+        <div class="container">
+                  <div class="header">
+                                <h1>JSON ↔ Excel Конвертер</h1>
+                              <p>Профессиональный инструмент для конвертации данных без лимитов</p>
+                  </div>div>
+        
+                <div class="converter-card">
+                            <div class="tabs">
+                                            <button class="tab active" onclick="switchTab('json-to-excel')">JSON → Excel</button>button>
+                                            <button class="tab" onclick="switchTab('excel-to-json')">Excel → JSON</button>button>
+                            </div>div>
+                
+                            <div id="json-to-excel" class="tab-content active">
+                                            <h3>Конвертация JSON в Excel</h3>
+                                            <textarea id="jsonInput" class="textarea" placeholder='Введите JSON данные, например:
+                                              [
+                                                {"name": "Иван", "age": 30, "city": "Москва"},
+                                                {"name": "Мария", "age": 25, "city": "СПб"}
+                                              ]'></textarea>
+                                            <button class="btn" onclick="convertJsonToExcel()">Конвертировать в Excel</button>button>
+                                            <button class="btn" onclick="clearJsonInput()">Очистить</button>button>
+                                            <div id="jsonPreview" class="preview" style="display: none;"></div>div>
+                                            <div id="jsonMessage"></div>div>
+                            </div>div>
+                
+                            <div id="excel-to-json" class="tab-content">
+                                            <h3>Конвертация Excel в JSON</h3>
+                                            <div class="upload-area" onclick="document.getElementById('excelFile').click()">
+                                                                <div class="upload-icon">📁</div>div>
+                                                                <p>Нажмите для выбора Excel файла или перетащите сюда</p>
+                                                                <p style="color: #666; font-size: 0.9rem;">Поддерживаются форматы: .xlsx, .xls</p>
+                                            </div>div>
+                                            <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this)">
+                                            <button class="btn" onclick="convertExcelToJson()" id="convertExcelBtn" disabled>Конвертировать в JSON</button>button>
+                                            <button class="btn" onclick="clearExcelInput()">Очистить</button>button>
+                                            <div id="excelPreview" class="preview" style="display: none;"></div>div>
+                                            <div id="excelMessage"></div>div>
+                            </div>div>
+                </div>div>
+        
+                <div class="features">
+                            <div class="feature">
+                                            <div class="feature-icon">🔒</div>div>
+                                            <h3>100% Безопасность</h3>
+                                            <p>Все операции выполняются локально в вашем браузере. Данные не передаются на сервер.</p>
+                            </div>div>
+                            <div class="feature">
+                                            <div class="feature-icon">⚡</div>div>
+                                            <h3>Мгновенная обработка</h3>
+                                            <p>Конвертация происходит за секунды без ожидания и очередей.</p>
+                            </div>div>
+                            <div class="feature">
+                                            <div class="feature-icon">🆓</div>div>
+                                            <h3>Без лимитов</h3>
+                                            <p>Конвертируйте файлы любого размера абсолютно бесплатно.</p>
+                            </div>div>
+                </div>div>
+        </div>div>
+  
+      <script>
+                let currentExcelData = null;
+
+                function switchTab(tabName) {
+                              // Скрыть все вкладки
+                              document.querySelectorAll('.tab-content').forEach(content => {
+                                                content.classList.remove('active');
+                              });
+                              document.querySelectorAll('.tab').forEach(tab => {
+                                                tab.classList.remove('active');
+                              });
+
+                              // Показать выбранную вкладку
+                              document.getElementById(tabName).classList.add('active');
+                              event.target.classList.add('active');
+                }
+
+                function convertJsonToExcel() {
+                              const jsonInput = document.getElementById('jsonInput').value.trim();
+                              const messageDiv = document.getElementById('jsonMessage');
+                              const previewDiv = document.getElementById('jsonPreview');
+
+                              if (!jsonInput) {
+                                                showMess
+      </script></p></p></h1>
   </body>
-</html>
+      </style></title>
+  </head>

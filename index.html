@@ -22,17 +22,16 @@
     <meta property="twitter:url" content="https://jsontoxml.online/">
     <meta property="twitter:title" content="JSON ↔ Excel Конвертер | Бесплатный онлайн инструмент">
     <meta property="twitter:description" content="Бесплатный онлайн конвертер JSON в Excel и Excel в JSON.">
-    <meta property="twitter:image" content="https:/jsontoxml.online/favicon.ico/">
+    <meta property="twitter:image" content="https://jsontoxml.online/images/preview.jpg">
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://jsontoxml.online/">
     
-   <!-- Favicon -->
-<link rel="icon" type="image/png" href="/https:/jsontoxml.online/my-favicon/favicon.ico/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/https:/jsontoxml.online/my-favicon/favicon.ico/favicon.svg" />
-<link rel="shortcut icon" href="/https:/jsontoxml.online/my-favicon/favicon.ico/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/https:/jsontoxml.online/my-favicon/favicon.ico/apple-touch-icon.png" />
-<link rel="manifest" href="/https:/jsontoxml.online/my-favicon/favicon.ico/site.webmanifest" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     
     <!-- JSON-LD структурированные данные -->
     <script type="application/ld+json">
@@ -188,7 +187,7 @@
         }
         
         .url-input.valid {
-            border-color: #28a745;
+            border-color: ';28a745';
         }
         
         .url-input.invalid {
@@ -389,13 +388,10 @@
                         <label>Введите JSON данные, например:</label>
                         <textarea class="json-input" id="jsonInput" placeholder='[
   {"name": "Thomas Müller", "age": 30, "city": "Berlin", "salary": 75000},
+  {"name": "Sophie Dubois", "age": 25, "city": "Paris", "salary": 65000},
+  {"name": "Marco Rossi", "age": 35, "city": "Rome", "salary": 80000},
   {"name": "Emma Johnson", "age": 28, "city": "London", "salary": 70000},
-  {"name": "Luca García", "age": 32, "city": "Madrid", "salary": 68000},
-  {"name": "Johannes van Dijk", "age": 31, "city": "Amsterdam", "salary": 69000},
-  {"name": "Isabella Costa", "age": 27, "city": "Lisbon", "salary": 62000},
-  {"name": "Alexander Andersen", "age": 33, "city": "Copenhagen", "salary": 78000},
-  {"name": "Anna Potes", "age": 36, "city": "Vienna", "salary": 72000},
-  {"name": "Clara Nilsson", "age": 26, "city": "Stockholm", "salary": 71000}
+  {"name": "Luca García", "age": 32, "city": "Madrid", "salary": 68000}
 ]'></textarea>
                     </div>
                 </div>
@@ -500,27 +496,42 @@
                 return;
             }
 
-            if (!validateUrl(url)) {
-                showMessage(messageDiv, 'Пожалуйста, введите корректную ссылку (должна начинаться с http:// или https://)', 'error');
-                urlInput.classList.add('invalid');
-                return;
-            }
-
-            urlInput.classList.remove('invalid');
-            urlInput.classList.add('valid');
-
-            showMessage(messageDiv, 'Загружаю JSON данные...', 'info');
+            showMessage(messageDiv, 'Загружаю JSON данные через CORS-прокси...', 'info');
 
             try {
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Список CORS-прокси для обхода ограничений
+                const corsProxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                    `https://cors-anywhere.herokuapp.com/${url}`
+                ];
+
+                let response;
+                let lastError;
+
+                // Пробуем каждый прокси до первого успешного
+                for (const proxyUrl of corsProxies) {
+                    try {
+                        response = await fetch(proxyUrl, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            timeout: 10000
+                        });
+                        
+                        if (response.ok) break;
+                        
+                    } catch (error) {
+                        lastError = error;
+                        console.log(`Прокси не сработал, пробуем следующий...`);
+                        continue;
+                    }
                 }
 
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    console.warn('Content-Type не указывает на JSON, но попробуем распарсить');
+                if (!response || !response.ok) {
+                    throw new Error('Все CORS-прокси не сработали. Попробуйте: 1) Установить CORS-расширение 2) Скачать файл вручную');
                 }
 
                 const jsonText = await response.text();
@@ -537,17 +548,16 @@
                 jsonTextarea.value = JSON.stringify(validation.data, null, 2);
                 jsonTextarea.classList.add('valid');
 
-                showMessage(messageDiv, `JSON данные успешно загружены с ${url}`, 'success');
+                showMessage(messageDiv, 'JSON данные успешно загружены через прокси!', 'success');
 
             } catch (error) {
                 console.error('Ошибка загрузки JSON:', error);
-                urlInput.classList.add('invalid');
                 
-                let errorMessage = 'Ошибка загрузки JSON: ';
-                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                    errorMessage += 'Не удается получить доступ к ссылке. Возможные причины: CORS политика, неверная ссылка, или сервер недоступен.';
-                } else {
+                let errorMessage = 'Ошибка загрузки: ';
+                if (error.message.includes('CORS') || error.message.includes('прокси')) {
                     errorMessage += error.message;
+                } else {
+                    errorMessage += 'Проблема с загрузкой данных. Проверьте ссылку и попробуйте снова.';
                 }
                 
                 showMessage(messageDiv, errorMessage, 'error');

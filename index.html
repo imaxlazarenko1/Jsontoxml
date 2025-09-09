@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON ↔ Excel Конвертер</title>
+    <!-- Добавляем библиотеку SheetJS для работы с Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -403,7 +405,7 @@
         }
 
         function switchInputMethod(method, element) {
-            // Переключение методов ввода - ИСПРАВЛЕНО!
+            // Переключение методов ввода
             document.querySelectorAll('.input-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.input-method').forEach(section => section.classList.remove('active'));
             
@@ -460,7 +462,6 @@
 
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
-                    // Попробуем все равно распарсить как JSON
                     console.warn('Content-Type не указывает на JSON, но попробуем распарсить');
                 }
 
@@ -516,7 +517,6 @@
             jsonInput.classList.add('valid');
 
             try {
-                // Простая конвертация в CSV формат для демонстрации
                 const data = validation.data;
                 if (!Array.isArray(data)) {
                     showMessage(messageDiv, 'JSON должен содержать массив объектов', 'error');
@@ -574,9 +574,8 @@
                 return;
             }
 
-            // Для демонстрации - просто активируем кнопку
-            convertBtn.disabled = false;
             currentExcelData = file;
+            convertBtn.disabled = false;
             showMessage(messageDiv, `Файл "${file.name}" готов к конвертации`, 'success');
         }
 
@@ -588,26 +587,51 @@
                 return;
             }
 
-            // Демонстрационная конвертация
-            const demoJson = [
-                {"Column1": "Value1", "Column2": "Value2", "Column3": "Value3"},
-                {"Column1": "Data1", "Column2": "Data2", "Column3": "Data3"}
-            ];
-
-            const jsonString = JSON.stringify(demoJson, null, 2);
+            const reader = new FileReader();
             
-            // Создаем и скачиваем JSON файл
-            const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'converted_data.json');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Получаем первую страницу
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Конвертируем в JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if (jsonData.length === 0) {
+                        showMessage(messageDiv, 'Файл Excel не содержит данных', 'error');
+                        return;
+                    }
+                    
+                    const jsonString = JSON.stringify(jsonData, null, 2);
+                    
+                    // Создаем и скачиваем JSON файл
+                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'converted_data.json');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
 
-            showMessage(messageDiv, 'Excel файл успешно конвертирован в JSON!', 'success');
+                    showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей в JSON!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Ошибка конвертации:', error);
+                    showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showMessage(messageDiv, 'Ошибка чтения файла', 'error');
+            };
+            
+            reader.readAsArrayBuffer(currentExcelData);
         }
 
         function showMessage(messageDiv, text, type) {
@@ -669,4 +693,3 @@
     </script>
 </body>
 </html>
-

@@ -977,23 +977,6 @@
             document.getElementById('excelMessage').style.display = 'none';
             currentExcelData = null;
         }
-
-        // Валидация JSON в реальном времени
-        document.getElementById('jsonInput').addEventListener('input', function() {
-            const jsonText = this.value.trim();
-            if (jsonText) {
-                const validation = validateJson(jsonText);
-                if (validation.valid) {
-                    this.classList.remove('invalid');
-                    this.classList.add('valid');
-                } else {
-                    this.classList.remove('valid');
-                    this.classList.add('invalid');
-                }
-            } else {
-                this.classList.remove('valid', 'invalid');
-            }
-        });
-
-        // Валидация URL в реальном времени
-        document.getElementById('jsonUrl').
+    </script>
+</body>
+</html>

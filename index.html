@@ -40,8 +40,6 @@
     <!-- Предзагрузка ключевых ресурсов -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://www.googletagmanager.com">
-    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     
     <!-- JSON-LD структурированные данные -->
     <script type="application/ld+json">
@@ -539,16 +537,16 @@
                 <h2 id="converter-heading" class="visually-hidden">Конвертер JSON и Excel</h2>
                 
                 <div class="mode-tabs">
-                    <button class="mode-tab active" onclick="switchMode('json-to-excel')">JSON → Excel</button>
-                    <button class="mode-tab" onclick="switchMode('excel-to-json')">Excel → JSON</button>
+                    <button class="mode-tab active" data-mode="json-to-excel">JSON → Excel</button>
+                    <button class="mode-tab" data-mode="excel-to-json">Excel → JSON</button>
                 </div>
                 
                 <div id="json-to-excel" class="converter-section active">
                     <h3>Конвертация JSON в Excel</h3>
                     
                     <div class="input-tabs">
-                        <button class="input-tab active" onclick="switchInputMethod('manual', this)">Ввести вручную</button>
-                        <button class="input-tab" onclick="switchInputMethod('url', this)">Загрузить по ссылке</button>
+                        <button class="input-tab active" data-method="manual">Ввести вручную</button>
+                        <button class="input-tab" data-method="url">Загрузить по ссылке</button>
                     </div>
                     
                     <div id="manual-input" class="input-method active">
@@ -570,13 +568,13 @@
                             <input type="url" class="url-input" id="jsonUrl" placeholder="https://example.com/data.json">
                         </div>
                         <div class="buttons">
-                            <button class="btn btn-info" onclick="loadJsonFromUrl()" aria-label="Загрузить JSON по ссылке">🔗 Загрузить JSON</button>
+                            <button class="btn btn-info" id="loadJsonBtn" aria-label="Загрузить JSON по ссылке">🔗 Загрузить JSON</button>
                         </div>
                     </div>
                     
                     <div class="buttons">
-                        <button class="btn btn-primary" onclick="convertJsonToExcel()" aria-label="Конвертировать JSON в Excel файл">📊 Конвертировать в Excel</button>
-                        <button class="btn btn-secondary" onclick="clearJsonInput()" aria-label="Очистить поле ввода">🗑️ Очистить</button>
+                        <button class="btn btn-primary" id="convertJsonBtn" aria-label="Конвертировать JSON в Excel файл">📊 Конвертировать в Excel</button>
+                        <button class="btn btn-secondary" id="clearJsonBtn" aria-label="Очистить поле ввода">🗑️ Очистить</button>
                     </div>
                     <div id="jsonMessage" class="message"></div>
                 </div>
@@ -585,11 +583,11 @@
                     <h3>Конвертация Excel в JSON</h3>
                     <div class="input-group">
                         <label for="excelFile">Выберите Excel файл (.xlsx, .xls):</label>
-                        <input type="file" class="file-input" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelFile(this)">
+                        <input type="file" class="file-input" id="excelFile" accept=".xlsx,.xls">
                     </div>
                     <div class="buttons">
-                        <button class="btn btn-primary" id="convertExcelBtn" onclick="convertExcelToJson()" disabled aria-label="Конвертировать Excel в JSON">📄 Конвертировать в JSON</button>
-                        <button class="btn btn-secondary" onclick="clearExcelInput()" aria-label="Очистить поле ввода">🗑️ Очистить</button>
+                        <button class="btn btn-primary" id="convertExcelBtn" disabled aria-label="Конвертировать Excel в JSON">📄 Конвертировать в JSON</button>
+                        <button class="btn btn-secondary" id="clearExcelBtn" aria-label="Очистить поле ввода">🗑️ Очистить</button>
                     </div>
                     <div id="excelMessage" class="message"></div>
                 </div>
@@ -652,12 +650,72 @@
     <script>
         let currentExcelData = null;
 
-        function switchMode(mode) {
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Назначаем обработчики для кнопок переключения режимов
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchMode(this.dataset.mode, this);
+                });
+            });
+            
+            // Назначаем обработчики для кнопок переключения методов ввода
+            document.querySelectorAll('.input-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchInputMethod(this.dataset.method, this);
+                });
+            });
+            
+            // Назначаем обработчики для основных кнопок
+            document.getElementById('loadJsonBtn').addEventListener('click', loadJsonFromUrl);
+            document.getElementById('convertJsonBtn').addEventListener('click', convertJsonToExcel);
+            document.getElementById('clearJsonBtn').addEventListener('click', clearJsonInput);
+            document.getElementById('convertExcelBtn').addEventListener('click', convertExcelToJson);
+            document.getElementById('clearExcelBtn').addEventListener('click', clearExcelInput);
+            document.getElementById('excelFile').addEventListener('change', function() {
+                handleExcelFile(this);
+            });
+            
+            // Валидация JSON в реальном времени
+            document.getElementById('jsonInput').addEventListener('input', function() {
+                const jsonText = this.value.trim();
+                if (jsonText) {
+                    const validation = validateJson(jsonText);
+                    if (validation.valid) {
+                        this.classList.remove('invalid');
+                        this.classList.add('valid');
+                    } else {
+                        this.classList.remove('valid');
+                        this.classList.add('invalid');
+                    }
+                } else {
+                    this.classList.remove('valid', 'invalid');
+                }
+            });
+            
+            // Валидация URL в реальном времени
+            document.getElementById('jsonUrl').addEventListener('input', function() {
+                const url = this.value.trim();
+                if (url) {
+                    if (validateUrl(url)) {
+                        this.classList.remove('invalid');
+                        this.classList.add('valid');
+                    } else {
+                        this.classList.remove('valid');
+                        this.classList.add('invalid');
+                    }
+                } else {
+                    this.classList.remove('valid', 'invalid');
+                }
+            });
+        });
+
+        function switchMode(mode, element) {
             // Переключение табов
             document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.converter-section').forEach(section => section.classList.remove('active'));
             
-            event.target.classList.add('active');
+            element.classList.add('active');
             document.getElementById(mode).classList.add('active');
         }
 
@@ -699,6 +757,11 @@
                 return;
             }
 
+            if (!validateUrl(url)) {
+                showMessage(messageDiv, 'Пожалуйста, введите корректную ссылку', 'error');
+                return;
+            }
+
             showMessage(messageDiv, 'Загружаю JSON данные через CORS-прокси...', 'info');
 
             try {
@@ -706,8 +769,7 @@
                 const corsProxies = [
                     `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                     `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                    `https://cors-anywhere.herokuapp.com/${url}`
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
                 ];
 
                 let response;
@@ -716,13 +778,18 @@
                 // Пробуем каждый прокси до первого успешного
                 for (const proxyUrl of corsProxies) {
                     try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000);
+                        
                         response = await fetch(proxyUrl, {
+                            signal: controller.signal,
                             headers: {
                                 'Accept': 'application/json',
                                 'Content-Type': 'application/json'
-                            },
-                            timeout: 10000
+                            }
                         });
+                        
+                        clearTimeout(timeoutId);
                         
                         if (response.ok) break;
                         
@@ -734,7 +801,7 @@
                 }
 
                 if (!response || !response.ok) {
-                    throw new Error('Все CORS-прокси не сработали. Попробуйте: 1) Установить CORS-расширение 2) Скачать файл вручную');
+                    throw new Error('Не удалось загрузить JSON файл. Попробуйте скачать файл вручную и вставить содержимое.');
                 }
 
                 const jsonText = await response.text();
@@ -745,24 +812,18 @@
                 }
 
                 // Переключаемся на ручной ввод и вставляем данные
-                const manualTab = document.querySelector('.input-tab[onclick*="manual"]');
+                const manualTab = document.querySelector('.input-tab[data-method="manual"]');
                 switchInputMethod('manual', manualTab);
 
                 jsonTextarea.value = JSON.stringify(validation.data, null, 2);
                 jsonTextarea.classList.add('valid');
 
-                showMessage(messageDiv, 'JSON данные успешно загружены через прокси!', 'success');
+                showMessage(messageDiv, 'JSON данные успешно загружены!', 'success');
 
             } catch (error) {
                 console.error('Ошибка загрузки JSON:', error);
                 
-                let errorMessage = 'Ошибка загрузки: ';
-                if (error.message.includes('CORS') || error.message.includes('прокси')) {
-                    errorMessage += error.message;
-                } else {
-                    errorMessage += 'Проблема с загрузкой данных. Проверьте ссылку и попробуйте снова.';
-                }
-                
+                let errorMessage = 'Ошибка загрузки: ' + error.message;
                 showMessage(messageDiv, errorMessage, 'error');
             }
         }
@@ -799,31 +860,19 @@
                     return;
                 }
 
-                // Получаем заголовки из первого объекта
-                const headers = Object.keys(data[0]);
-                let csvContent = headers.join(',') + '\n';
-
-                // Добавляем данные
-                data.forEach(row => {
-                    const values = headers.map(header => {
-                        const value = row[header] || '';
-                        return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
-                    });
-                    csvContent += values.join(',') + '\n';
-                });
-
+                // Создаем новую книгу Excel
+                const wb = XLSX.utils.book_new();
+                
+                // Конвертируем JSON в рабочий лист
+                const ws = XLSX.utils.json_to_sheet(data);
+                
+                // Добавляем рабочий лист в книгу
+                XLSX.utils.book_append_sheet(wb, ws, "Data");
+                
                 // Создаем и скачиваем файл
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'converted_data.csv');
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                XLSX.writeFile(wb, 'converted_data.xlsx');
 
-                showMessage(messageDiv, `Успешно конвертировано ${data.length} записей в CSV файл!`, 'success');
+                showMessage(messageDiv, `Успешно конвертировано ${data.length} записей в Excel файл!`, 'success');
             } catch (error) {
                 showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
             }

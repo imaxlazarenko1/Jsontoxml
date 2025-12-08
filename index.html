@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ========== SEO МЕТАТЕГИ ========== -->
-    <title>Конвертер JSON в Excel и Excel в JSON | Бесплатный онлайн инструмент</title>
-    <meta name="description" content="Бесплатный онлайн конвертер JSON в Excel и Excel в JSON. Конвертируйте данные без ограничений, быстро и безопасно. Работает в браузере без загрузки на сервер.">
-    <meta name="keywords" content="json в excel, excel в json, конвертер json, конвертер excel, онлайн конвертер, преобразовать json в excel, excel to json, json to excel, бесплатный конвертер, конвертировать json">
+    <title>Конвертер JSON в Excel, CSV | Бесплатный онлайн инструмент</title>
+    <meta name="description" content="Бесплатный онлайн конвертер JSON в Excel, CSV и обратно. Конвертируйте данные без ограничений, быстро и безопасно. Работает в браузере без загрузки на сервер.">
+    <meta name="keywords" content="json в excel, excel в json, конвертер json, конвертер excel, csv конвертер, json в csv, excel в csv, онлайн конвертер, преобразовать json в excel">
     <meta name="author" content="JSON Excel Converter">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="theme-color" content="#667eea">
@@ -15,8 +15,8 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jsontoxml.online/">
-    <meta property="og:title" content="Конвертер JSON в Excel и Excel в JSON | Бесплатный онлайн инструмент">
-    <meta property="og:description" content="Бесплатный онлайн конвертер JSON в Excel и Excel в JSON. Конвертируйте данные без ограничений.">
+    <meta property="og:title" content="Конвертер JSON в Excel, CSV | Бесплатный онлайн инструмент">
+    <meta property="og:description" content="Бесплатный онлайн конвертер JSON в Excel, CSV и обратно. Конвертируйте данные без ограничений.">
     <meta property="og:image" content="https://jsontoxml.online/images/preview.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -24,8 +24,8 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://jsontoxml.online/">
-    <meta property="twitter:title" content="Конвертер JSON в Excel и Excel в JSON | Бесплатный онлайн инструмент">
-    <meta property="twitter:description" content="Бесплатный онлайн конвертер JSON в Excel и Excel в JSON.">
+    <meta property="twitter:title" content="Конвертер JSON в Excel, CSV | Бесплатный онлайн инструмент">
+    <meta property="twitter:description" content="Бесплатный онлайн конвертер JSON в Excel, CSV и обратно.">
     <meta property="twitter:image" content="https://jsontoxml.online/images/preview.jpg">
     
     <!-- Canonical URL -->
@@ -46,8 +46,8 @@
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "Конвертер JSON в Excel и Excel в JSON",
-      "description": "Бесплатный онлайн конвертер для преобразования JSON в Excel и Excel в JSON",
+      "name": "Конвертер JSON в Excel, CSV",
+      "description": "Бесплатный онлайн конвертер для преобразования JSON в Excel, CSV и обратно",
       "url": "https://jsontoxml.online/",
       "applicationCategory": "UtilityApplication",
       "operatingSystem": "Any",
@@ -81,7 +81,7 @@
           "name": "Конвертер работает бесплатно?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Да, наш конвертер JSON в Excel и Excel в JSON абсолютно бесплатен и не имеет ограничений на количество конвертаций или размер файлов."
+            "text": "Да, наш конвертер JSON в Excel и CSV абсолютно бесплатен и не имеет ограничений на количество конвертаций или размер файлов."
           }
         },
         {
@@ -112,13 +112,13 @@
         {
           "@type": "HowToStep",
           "name": "Нажмите конвертировать",
-          "text": "Нажмите кнопку 'Конвертировать в Excel'.",
+          "text": "Нажмите кнопку 'Конвертировать в Excel' или 'Конвертировать в CSV'.",
           "url": "https://jsontoxml.online/#convert"
         },
         {
           "@type": "HowToStep",
           "name": "Скачайте файл",
-          "text": "Файл Excel (.xlsx) автоматически скачается на ваше устройство.",
+          "text": "Файл Excel (.xlsx) или CSV автоматически скачается на ваше устройство.",
           "url": "https://jsontoxml.online/#download"
         }
       ]
@@ -184,6 +184,7 @@
             background: #f8f9fa;
             border-radius: 10px;
             padding: 5px;
+            flex-wrap: wrap;
         }
         
         .mode-tab {
@@ -196,6 +197,8 @@
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
+            min-width: 180px;
+            margin: 2px;
         }
         
         .mode-tab.active {
@@ -299,6 +302,10 @@
             cursor: pointer;
             transition: all 0.3s;
             font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
         .btn-primary {
@@ -327,6 +334,16 @@
         
         .btn-info:hover {
             background: #138496;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
         }
         
         .message {
@@ -395,6 +412,7 @@
             background: #f8f9fa;
             border-radius: 8px;
             padding: 3px;
+            flex-wrap: wrap;
         }
         
         .input-tab {
@@ -408,6 +426,8 @@
             font-weight: 500;
             font-size: 14px;
             transition: all 0.3s;
+            min-width: 140px;
+            margin: 2px;
         }
         
         .input-tab.active {
@@ -421,6 +441,74 @@
         
         .input-method.active {
             display: block;
+        }
+        
+        .format-options {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .format-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .format-option:hover {
+            background: #e9ecef;
+        }
+        
+        .format-option.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .format-option input[type="radio"] {
+            display: none;
+        }
+        
+        .download-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .download-btn {
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .download-btn.csv {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .download-btn.csv:hover {
+            background: #e0a800;
         }
         
         .seo-content {
@@ -515,8 +603,23 @@
                 width: 100%;
             }
             
+            .download-options {
+                flex-direction: column;
+            }
+            
+            .download-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
             .seo-content {
                 padding: 20px;
+            }
+            
+            .mode-tab, .input-tab {
+                min-width: 120px;
+                padding: 10px 5px;
+                font-size: 14px;
             }
         }
     </style>
@@ -524,25 +627,26 @@
 <body>
     <div class="container">
         <div class="breadcrumb">
-            <a href="https://jsontoxml.online/">Главная</a> > <span>Конвертер JSON в Excel</span>
+            <a href="https://jsontoxml.online/">Главная</a> > <span>Конвертер JSON в Excel и CSV</span>
         </div>
         
         <header class="header" role="banner">
-            <h1>Конвертер JSON ↔ Excel</h1>
-            <p>Профессиональный инструмент для конвертации данных без лимитов. Быстро, безопасно, бесплатно.</p>
+            <h1>Конвертер JSON ↔ Excel ↔ CSV</h1>
+            <p>Профессиональный инструмент для конвертации данных между JSON, Excel и CSV форматами. Быстро, безопасно, бесплатно.</p>
         </header>
         
         <main>
             <section class="converter-card" aria-labelledby="converter-heading">
-                <h2 id="converter-heading" class="visually-hidden">Конвертер JSON и Excel</h2>
+                <h2 id="converter-heading" class="visually-hidden">Конвертер JSON, Excel и CSV</h2>
                 
                 <div class="mode-tabs">
-                    <button class="mode-tab active" data-mode="json-to-excel">JSON → Excel</button>
+                    <button class="mode-tab active" data-mode="json-to-excel">JSON → Excel/CSV</button>
                     <button class="mode-tab" data-mode="excel-to-json">Excel → JSON</button>
+                    <button class="mode-tab" data-mode="csv-to-json">CSV → JSON</button>
                 </div>
                 
                 <div id="json-to-excel" class="converter-section active">
-                    <h3>Конвертация JSON в Excel</h3>
+                    <h3>Конвертация JSON в Excel или CSV</h3>
                     
                     <div class="input-tabs">
                         <button class="input-tab active" data-method="manual">Ввести вручную</button>
@@ -572,11 +676,35 @@
                         </div>
                     </div>
                     
+                    <div class="format-options">
+                        <label class="format-option active">
+                            <input type="radio" name="output-format" value="excel" checked>
+                            <span>📊 Excel (.xlsx)</span>
+                        </label>
+                        <label class="format-option">
+                            <input type="radio" name="output-format" value="csv">
+                            <span>📄 CSV (.csv)</span>
+                        </label>
+                    </div>
+                    
                     <div class="buttons">
-                        <button class="btn btn-primary" id="convertJsonBtn" aria-label="Конвертировать JSON в Excel файл">📊 Конвертировать в Excel</button>
+                        <button class="btn btn-primary" id="convertJsonBtn" aria-label="Конвертировать JSON в выбранный формат">
+                            <span id="convertBtnText">📊 Конвертировать в Excel</span>
+                        </button>
                         <button class="btn btn-secondary" id="clearJsonBtn" aria-label="Очистить поле ввода">🗑️ Очистить</button>
                     </div>
+                    
                     <div id="jsonMessage" class="message"></div>
+                    
+                    <!-- Скрытая секция для скачивания после конвертации -->
+                    <div id="downloadSection" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <h4>Файл готов к скачиванию</h4>
+                        <p>Выберите формат для скачивания:</p>
+                        <div class="download-options">
+                            <button class="download-btn" id="downloadExcelBtn">📥 Скачать как Excel</button>
+                            <button class="download-btn csv" id="downloadCsvBtn">📥 Скачать как CSV</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="excel-to-json" class="converter-section">
@@ -590,6 +718,24 @@
                         <button class="btn btn-secondary" id="clearExcelBtn" aria-label="Очистить поле ввода">🗑️ Очистить</button>
                     </div>
                     <div id="excelMessage" class="message"></div>
+                </div>
+                
+                <div id="csv-to-json" class="converter-section">
+                    <h3>Конвертация CSV в JSON</h3>
+                    <div class="input-group">
+                        <label for="csvFile">Выберите CSV файл или введите CSV данные:</label>
+                        <textarea class="json-input" id="csvInput" placeholder="name,age,city,salary
+Thomas Müller,30,Berlin,75000
+Sophie Dubois,25,Paris,65000
+Marco Rossi,35,Rome,80000
+Emma Johnson,28,London,70000
+Luca García,32,Madrid,68000"></textarea>
+                    </div>
+                    <div class="buttons">
+                        <button class="btn btn-primary" id="convertCsvBtn" aria-label="Конвертировать CSV в JSON">🔄 Конвертировать в JSON</button>
+                        <button class="btn btn-secondary" id="clearCsvBtn" aria-label="Очистить поле ввода">🗑️ Очистить</button>
+                    </div>
+                    <div id="csvMessage" class="message"></div>
                 </div>
             </section>
             
@@ -612,43 +758,46 @@
             </div>
             
             <article class="seo-content">
-                <h2>Бесплатный онлайн конвертер JSON в Excel и обратно</h2>
-                <p>Наш мощный и intuitive инструмент позволяет мгновенно <strong>конвертировать JSON в Excel</strong> (XLSX) и <strong>Excel в JSON</strong> без установки программного обеспечения. Идеальное решение для разработчиков, аналитиков данных и всех, кто работает с обменом данных между веб-приложениями и таблицами.</p>
+                <h2>Бесплатный онлайн конвертер JSON, Excel и CSV</h2>
+                <p>Наш мощный и intuitive инструмент позволяет мгновенно <strong>конвертировать JSON в Excel и CSV</strong>, а также выполнять обратные преобразования без установки программного обеспечения. Идеальное решение для разработчиков, аналитиков данных и всех, кто работает с обменом данных между различными форматами.</p>
 
-                <h3>Зачем конвертировать JSON в Excel?</h3>
-                <p>Формат <strong>JSON</strong> (JavaScript Object Notation) является стандартом де-факто для передачи данных в веб-API и приложениях. Однако для анализа, отчетности и визуализации данных часто требуется <strong>Excel</strong> или другие табличные процессоры. Наш конвертер обеспечивает мост между этими двумя мирами.</p>
+                <h3>Зачем конвертировать между JSON, Excel и CSV?</h3>
+                <p>Каждый формат имеет свои преимущества: <strong>JSON</strong> идеален для веб-API, <strong>Excel</strong> отлично подходит для анализа и визуализации, а <strong>CSV</strong> - простой и универсальный формат для обмена данными. Наш конвертер обеспечивает быстрый переход между всеми этими форматами.</p>
 
                 <h3>Ключевые особенности конвертера:</h3>
                 <ul>
-                    <li><strong>Двусторонняя конвертация:</strong> Легко переключайтесь между JSON to Excel и Excel to JSON.</li>
+                    <li><strong>Трехсторонняя конвертация:</strong> Легко переключайтесь между JSON, Excel и CSV.</li>
+                    <li><strong>Поддержка CSV формата:</strong> Скачивайте данные в популярном CSV формате.</li>
                     <li><strong>Поддержка больших файлов:</strong> Обрабатывайте массивы данных любого размера.</li>
                     <li><strong>Работа в браузере:</strong> Вся обработка происходит на вашем устройстве, обеспечивая максимальную скорость и безопасность.</li>
                     <li><strong>Не требует регистрации:</strong> Просто зайдите на сайт и начните конвертировать.</li>
                 </ul>
 
                 <h3>Как это работает?</h3>
-                <p>Инструмент использует популярную библиотеку <strong>SheetJS</strong> для работы с Excel файлами, гарантируя высокую точность и совместимость. Для конвертации JSON применяется собственный оптимизированный алгоритм, корректно обрабатывающий вложенные объекты и массивы.</p>
+                <p>Инструмент использует популярную библиотеку <strong>SheetJS</strong> для работы с Excel файлами, гарантируя высокую точность и совместимость. Для конвертации в CSV применяется оптимизированный алгоритм с поддержкой кириллицы и специальных символов.</p>
                 
                 <h3>Часто задаваемые вопросы</h3>
-                <h4>Как конвертировать JSON в Excel?</h4>
-                <p>Просто вставьте ваши JSON-данные в текстовое поле, нажмите 'Конвертировать в Excel', и файл автоматически скачается. Все операции выполняются локально в вашем браузере.</p>
+                <h4>Как конвертировать JSON в CSV?</h4>
+                <p>Вставьте JSON данные, выберите формат CSV, нажмите 'Конвертировать' и файл автоматически скачается. Все операции выполняются локально в вашем браузере.</p>
                 
                 <h4>Конвертер работает бесплатно?</h4>
                 <p>Да, наш конвертер абсолютно бесплатен и не имеет ограничений на количество конвертаций или размер файлов.</p>
                 
-                <h4>Мои данные в безопасности?</h4>
-                <p>Абсолютно. Все операции выполняются на вашем устройстве. Мы не отправляем ваши файлы на наши серверы, поэтому ваши конфиденциальные данные полностью защищены.</p>
+                <h4>Поддерживается ли кириллица в CSV?</h4>
+                <p>Да, наш конвертер корректно обрабатывает кириллицу и другие языки, используя UTF-8 кодировку.</p>
             </article>
         </main>
         
         <footer>
-            <p>© 2023 JSON Excel Converter. Все права защищены.</p>
+            <p>© 2023 JSON Excel CSV Converter. Все права защищены.</p>
             <p><a href="/privacy">Политика конфиденциальности</a> | <a href="/terms">Условия использования</a> | <a href="/contact">Контакты</a></p>
         </footer>
     </div>
 
     <script>
-        let currentExcelData = null;
+        let currentData = null;
+        let currentJsonData = null;
+        let currentFormat = 'excel';
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
@@ -666,49 +815,51 @@
                 });
             });
             
+            // Обработчики для выбора формата
+            document.querySelectorAll('input[name="output-format"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    currentFormat = this.value;
+                    updateConvertButtonText();
+                });
+            });
+            
             // Назначаем обработчики для основных кнопок
             document.getElementById('loadJsonBtn').addEventListener('click', loadJsonFromUrl);
-            document.getElementById('convertJsonBtn').addEventListener('click', convertJsonToExcel);
+            document.getElementById('convertJsonBtn').addEventListener('click', convertJsonToFormat);
             document.getElementById('clearJsonBtn').addEventListener('click', clearJsonInput);
             document.getElementById('convertExcelBtn').addEventListener('click', convertExcelToJson);
             document.getElementById('clearExcelBtn').addEventListener('click', clearExcelInput);
+            document.getElementById('convertCsvBtn').addEventListener('click', convertCsvToJson);
+            document.getElementById('clearCsvBtn').addEventListener('click', clearCsvInput);
             document.getElementById('excelFile').addEventListener('change', function() {
                 handleExcelFile(this);
             });
             
+            // Обработчики для кнопок скачивания
+            document.getElementById('downloadExcelBtn').addEventListener('click', downloadAsExcel);
+            document.getElementById('downloadCsvBtn').addEventListener('click', downloadAsCsv);
+            
             // Валидация JSON в реальном времени
             document.getElementById('jsonInput').addEventListener('input', function() {
-                const jsonText = this.value.trim();
-                if (jsonText) {
-                    const validation = validateJson(jsonText);
-                    if (validation.valid) {
-                        this.classList.remove('invalid');
-                        this.classList.add('valid');
-                    } else {
-                        this.classList.remove('valid');
-                        this.classList.add('invalid');
-                    }
-                } else {
-                    this.classList.remove('valid', 'invalid');
-                }
+                validateJsonInput(this);
             });
             
             // Валидация URL в реальном времени
             document.getElementById('jsonUrl').addEventListener('input', function() {
-                const url = this.value.trim();
-                if (url) {
-                    if (validateUrl(url)) {
-                        this.classList.remove('invalid');
-                        this.classList.add('valid');
-                    } else {
-                        this.classList.remove('valid');
-                        this.classList.add('invalid');
-                    }
-                } else {
-                    this.classList.remove('valid', 'invalid');
-                }
+                validateUrlInput(this);
             });
+            
+            updateConvertButtonText();
         });
+
+        function updateConvertButtonText() {
+            const btnText = document.getElementById('convertBtnText');
+            if (currentFormat === 'excel') {
+                btnText.textContent = '📊 Конвертировать в Excel';
+            } else {
+                btnText.textContent = '📄 Конвертировать в CSV';
+            }
+        }
 
         function switchMode(mode, element) {
             // Переключение табов
@@ -717,6 +868,9 @@
             
             element.classList.add('active');
             document.getElementById(mode).classList.add('active');
+            
+            // Скрываем секцию скачивания при переключении режимов
+            document.getElementById('downloadSection').style.display = 'none';
         }
 
         function switchInputMethod(method, element) {
@@ -743,6 +897,37 @@
                 return url.startsWith('http://') || url.startsWith('https://');
             } catch {
                 return false;
+            }
+        }
+
+        function validateJsonInput(input) {
+            const jsonText = input.value.trim();
+            if (jsonText) {
+                const validation = validateJson(jsonText);
+                if (validation.valid) {
+                    input.classList.remove('invalid');
+                    input.classList.add('valid');
+                } else {
+                    input.classList.remove('valid');
+                    input.classList.add('invalid');
+                }
+            } else {
+                input.classList.remove('valid', 'invalid');
+            }
+        }
+
+        function validateUrlInput(input) {
+            const url = input.value.trim();
+            if (url) {
+                if (validateUrl(url)) {
+                    input.classList.remove('invalid');
+                    input.classList.add('valid');
+                } else {
+                    input.classList.remove('valid');
+                    input.classList.add('invalid');
+                }
+            } else {
+                input.classList.remove('valid', 'invalid');
             }
         }
 
@@ -828,7 +1013,7 @@
             }
         }
 
-        function convertJsonToExcel() {
+        function convertJsonToFormat() {
             const jsonInput = document.getElementById('jsonInput');
             const messageDiv = document.getElementById('jsonMessage');
             const jsonText = jsonInput.value.trim();
@@ -860,11 +1045,37 @@
                     return;
                 }
 
+                // Сохраняем данные для возможного скачивания в другом формате
+                currentData = data;
+                currentJsonData = jsonText;
+
+                // Показываем секцию скачивания
+                const downloadSection = document.getElementById('downloadSection');
+                downloadSection.style.display = 'block';
+
+                if (currentFormat === 'excel') {
+                    downloadAsExcel();
+                } else {
+                    downloadAsCsv();
+                }
+
+            } catch (error) {
+                showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+            }
+        }
+
+        function downloadAsExcel() {
+            try {
+                if (!currentData || currentData.length === 0) {
+                    showMessage(document.getElementById('jsonMessage'), 'Нет данных для конвертации', 'error');
+                    return;
+                }
+
                 // Создаем новую книгу Excel
                 const wb = XLSX.utils.book_new();
                 
                 // Конвертируем JSON в рабочий лист
-                const ws = XLSX.utils.json_to_sheet(data);
+                const ws = XLSX.utils.json_to_sheet(currentData);
                 
                 // Добавляем рабочий лист в книгу
                 XLSX.utils.book_append_sheet(wb, ws, "Data");
@@ -872,9 +1083,62 @@
                 // Создаем и скачиваем файл
                 XLSX.writeFile(wb, 'converted_data.xlsx');
 
-                showMessage(messageDiv, `Успешно конвертировано ${data.length} записей в Excel файл!`, 'success');
+                showMessage(document.getElementById('jsonMessage'), 
+                           `Успешно создан Excel файл с ${currentData.length} записями!`, 'success');
             } catch (error) {
-                showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+                showMessage(document.getElementById('jsonMessage'), 
+                           'Ошибка при создании Excel файла: ' + error.message, 'error');
+            }
+        }
+
+        function downloadAsCsv() {
+            try {
+                if (!currentData || currentData.length === 0) {
+                    showMessage(document.getElementById('jsonMessage'), 'Нет данных для конвертации', 'error');
+                    return;
+                }
+
+                // Получаем заголовки из первого объекта
+                const headers = Object.keys(currentData[0]);
+                
+                // Создаем CSV строку
+                let csvContent = headers.join(',') + '\n';
+                
+                // Добавляем данные
+                currentData.forEach(item => {
+                    const row = headers.map(header => {
+                        // Экранируем кавычки и запятые в значениях
+                        let value = item[header];
+                        if (value === null || value === undefined) {
+                            value = '';
+                        }
+                        value = String(value);
+                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                            value = '"' + value.replace(/"/g, '""') + '"';
+                        }
+                        return value;
+                    });
+                    csvContent += row.join(',') + '\n';
+                });
+
+                // Создаем и скачиваем файл
+                const blob = new Blob(['\uFEFF' + csvContent], { 
+                    type: 'text/csv;charset=utf-8;' 
+                });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'converted_data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showMessage(document.getElementById('jsonMessage'), 
+                           `Успешно создан CSV файл с ${currentData.length} записями!`, 'success');
+            } catch (error) {
+                showMessage(document.getElementById('jsonMessage'), 
+                           'Ошибка при создании CSV файла: ' + error.message, 'error');
             }
         }
 
@@ -894,7 +1158,7 @@
                 return;
             }
 
-            currentExcelData = file;
+            currentData = file;
             convertBtn.disabled = false;
             showMessage(messageDiv, `Файл "${file.name}" готов к конвертации`, 'success');
         }
@@ -902,7 +1166,7 @@
         function convertExcelToJson() {
             const messageDiv = document.getElementById('excelMessage');
             
-            if (!currentExcelData) {
+            if (!currentData) {
                 showMessage(messageDiv, 'Пожалуйста, выберите Excel файл', 'error');
                 return;
             }
@@ -951,7 +1215,97 @@
                 showMessage(messageDiv, 'Ошибка чтения файла', 'error');
             };
             
-            reader.readAsArrayBuffer(currentExcelData);
+            reader.readAsArrayBuffer(currentData);
+        }
+
+        function convertCsvToJson() {
+            const csvInput = document.getElementById('csvInput');
+            const messageDiv = document.getElementById('csvMessage');
+            const csvText = csvInput.value.trim();
+
+            if (!csvText) {
+                showMessage(messageDiv, 'Пожалуйста, введите CSV данные', 'error');
+                return;
+            }
+
+            try {
+                // Разбиваем CSV на строки
+                const lines = csvText.split('\n');
+                if (lines.length < 2) {
+                    showMessage(messageDiv, 'CSV должен содержать заголовки и хотя бы одну строку данных', 'error');
+                    return;
+                }
+
+                // Получаем заголовки из первой строки
+                const headers = lines[0].split(',').map(h => h.trim());
+                
+                // Парсим данные
+                const jsonData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+                    
+                    const values = parseCsvLine(lines[i]);
+                    const obj = {};
+                    
+                    headers.forEach((header, index) => {
+                        obj[header] = values[index] || '';
+                    });
+                    
+                    jsonData.push(obj);
+                }
+
+                if (jsonData.length === 0) {
+                    showMessage(messageDiv, 'CSV не содержит данных', 'error');
+                    return;
+                }
+
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                
+                // Создаем и скачиваем JSON файл
+                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'converted_from_csv.json');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей из CSV в JSON!`, 'success');
+
+            } catch (error) {
+                showMessage(messageDiv, 'Ошибка при конвертации CSV: ' + error.message, 'error');
+            }
+        }
+
+        function parseCsvLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        // Двойная кавычка внутри кавычек
+                        current += '"';
+                        i++;
+                    } else {
+                        // Начало или конец кавычек
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
         }
 
         function showMessage(messageDiv, text, type) {
@@ -969,13 +1323,21 @@
             document.getElementById('jsonUrl').value = '';
             document.getElementById('jsonUrl').classList.remove('valid', 'invalid');
             document.getElementById('jsonMessage').style.display = 'none';
+            document.getElementById('downloadSection').style.display = 'none';
+            currentData = null;
+            currentJsonData = null;
         }
 
         function clearExcelInput() {
             document.getElementById('excelFile').value = '';
             document.getElementById('convertExcelBtn').disabled = true;
             document.getElementById('excelMessage').style.display = 'none';
-            currentExcelData = null;
+            currentData = null;
+        }
+
+        function clearCsvInput() {
+            document.getElementById('csvInput').value = '';
+            document.getElementById('csvMessage').style.display = 'none';
         }
     </script>
 </body>

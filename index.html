@@ -705,57 +705,49 @@
     </style>
 </head>
 <body>
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js";
+      <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js";
 
-// Ваш firebaseConfig
-const firebaseConfig = {
-  apiKey: "AIzaSyDUpNnSCiD6dbvS3KO4uSbkymCgB5yRoNo",
-  authDomain: "eidos-push-notifications.firebaseapp.com",
-  projectId: "eidos-push-notifications",
-  storageBucket: "eidos-push-notifications.firebasestorage.app",
-  messagingSenderId: "803790504785",
-  appId: "1:803790504785:web:bab0b4933aad016d24c970",
-  measurementId: "G-XD8XQR79RH"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUpNnSCiD6dbvS3KO4uSbkymCgB5yRoNo",
+            authDomain: "eidos-push-notifications.firebaseapp.com",
+            projectId: "eidos-push-notifications",
+            storageBucket: "eidos-push-notifications.firebasestorage.app",
+            messagingSenderId: "803790504785",
+            appId: "1:803790504785:web:bab0b4933aad016d24c970",
+            measurementId: "G-XD8XQR79RH"
+        };
 
-// Инициализация Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const messaging = getMessaging(app);
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const messaging = getMessaging(app);
 
-// *** Вот куда нужно вставить ваш VAPID-ключ ***
-document.getElementById('requestPushPermission').addEventListener('click', () => { // Предполагаем, что вы используете кнопку для запроса
-  Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-      console.log('Разрешение на уведомления получено.');
-      getToken(messaging, { vapidKey: 'BP0x2Vaz3gYvYgI0baVqFDQ7bB3TjLCiu8CBCsMkiVtYkq7XYpMwc9cR3h0PAJTO1Kp2JakHwrvUoCl-0Gfvfhs' }).then((currentToken) => {
-        if (currentToken) {
-          console.log('Текущий токен клиента:', currentToken);
-          // Здесь вы можете отправить этот токен на ваш сервер для сохранения
-          // fetch('/save-subscription-token', {
-          //   method: 'POST',
-          //   headers: {
-          //     'Content-Type': 'application/json',
-          //   },
-          //   body: JSON.stringify({ token: currentToken }),
-          // });
-        } else {
-          console.log('Не удалось получить токен. Проверьте ваш VAPID ключ и настройки.');
-        }
-      }).catch((err) => {
-        console.log('Произошла ошибка при получении токена:', err);
-      });
-    } else {
-      console.log('Разрешение на уведомления не получено.');
-    }
-  });
-});
+        document.getElementById('requestPushPermission').addEventListener('click', () => {
+            Notification.requestPermission().then((permission) => {
+                if (permission === 'granted') {
+                    console.log('Разрешение на уведомления получено.');
+                    getToken(messaging, { vapidKey: 'BP0x2Vaz3gYvYgI0baVqFDQ7bB3TjLCiu8CBCsMkiVtYkq7XYpMwc9cR3h0PAJTO1Kp2JakHwrvUoCl-0Gfvfhs' }).then((currentToken) => {
+                        if (currentToken) {
+                            console.log('Текущий токен клиента:', currentToken);
+                            // ... ваш код для отправки токена на сервер
+                        } else {
+                            console.log('Не удалось получить токен. Проверьте ваш VAPID ключ и настройки.');
+                        }
+                    }).catch((err) => {
+                        console.log('Произошла ошибка при получении токена:', err);
+                    });
+                } else {
+                    console.log('Разрешение на уведомления не получено.');
+                }
+            });
+        });
 
-onMessage(messaging, (payload) => {
-  console.log('Сообщение на переднем плане:', payload);
-});
+        onMessage(messaging, (payload) => {
+            console.log('Сообщение на переднем плане:', payload);
+        });
+    </script>
 
     <div class="container">
         <div class="breadcrumb">

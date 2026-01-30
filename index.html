@@ -994,7 +994,12 @@ Luca García,32,Madrid,68000"></textarea>
             console.warn('Analytics initialization error:', error);
         }
 
-        // Инициализация push-уведомлений
+        // Глобальные переменные для конвертера
+        let currentData = null;
+        let currentJsonData = null;
+        let currentFormat = 'excel';
+
+        // Функции для уведомлений
         async function initializePushNotifications() {
             try {
                 const supported = await isSupported();
@@ -1164,11 +1169,59 @@ Luca García,32,Madrid,68000"></textarea>
             // Инициализация push-уведомлений
             initializePushNotifications();
 
-            // Инициализация основного функционала
+            // Инициализация основного функционала конвертера
             initializeMainFunctionality();
         });
+    </script>
 
-        // Основной функционал
+    <script>
+        // ========== ФУНКЦИИ КОНВЕРТЕРА ==========
+        
+        function loadMobileAd() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const screenWidth = window.innerWidth;
+            
+            if (isMobile && screenWidth <= 768) {
+                const adBanner = document.getElementById('mobileAdBanner');
+                const adPlaceholder = document.getElementById('adLoadingPlaceholder');
+                
+                adBanner.classList.add('show');
+                
+                setTimeout(function() {
+                    const script = document.createElement('script');
+                    script.async = true;
+                    script.type = 'text/javascript';
+                    script.src = 'https://endpoilnt.afizdigital.com/?c=rtb&m=direct&seat=wrdH1yshtuBBSUJnj7c7&token=M9jrG1uA1mIpzj9iYqYrj5qMEssOKlMH';
+                    
+                    script.onload = function() {
+                        console.log('Рекламный баннер успешно загружен');
+                        setTimeout(function() {
+                            adPlaceholder.style.opacity = '0';
+                            adPlaceholder.style.transition = 'opacity 0.5s';
+                            setTimeout(function() {
+                                adPlaceholder.style.display = 'none';
+                            }, 500);
+                        }, 2000);
+                    };
+                    
+                    script.onerror = function() {
+                        console.warn('Не удалось загрузить рекламный баннер');
+                        adPlaceholder.innerHTML = 
+                            '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#666;font-size:10px;line-height:1.2;">' +
+                            '<div>Рекламный баннер</div>' +
+                            '<div>320x50</div>' +
+                            '</div>';
+                        
+                        setTimeout(function() {
+                            adBanner.style.display = 'none';
+                        }, 5000);
+                    };
+                    
+                    document.getElementById('afizdigital-ad-slot').appendChild(script);
+                }, 1000);
+            }
+        }
+
         function initializeMainFunctionality() {
             // Назначаем обработчики для кнопок переключения режимов
             document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -1209,21 +1262,39 @@ Luca García,32,Madrid,68000"></textarea>
             document.getElementById('downloadCsvBtn').addEventListener('click', downloadAsCsv);
             
             // Обработчики для уведомлений
-            document.getElementById('requestPushPermission').addEventListener('click', requestNotificationPermission);
+            const requestPushButton = document.getElementById('requestPushPermission');
+            if (requestPushButton) {
+                requestPushButton.addEventListener('click', function() {
+                    // Используем глобальную функцию из Firebase модуля
+                    if (window.requestNotificationPermission) {
+                        window.requestNotificationPermission();
+                    }
+                });
+            }
+            
             document.getElementById('notificationAllow').addEventListener('click', async function() {
                 document.getElementById('notificationPanel').classList.remove('show');
-                await requestNotificationPermission();
+                if (window.requestNotificationPermission) {
+                    await window.requestNotificationPermission();
+                }
             });
+            
             document.getElementById('notificationLater').addEventListener('click', function() {
                 document.getElementById('notificationPanel').classList.remove('show');
             });
-            document.getElementById('manageNotifications').addEventListener('click', function() {
-                if (Notification.permission === 'granted') {
-                    showMessage('Уведомления уже включены. Для отключения зайдите в настройки браузера.', 'info');
-                } else {
-                    requestNotificationPermission();
-                }
-            });
+            
+            const manageNotificationsBtn = document.getElementById('manageNotifications');
+            if (manageNotificationsBtn) {
+                manageNotificationsBtn.addEventListener('click', function() {
+                    if (Notification.permission === 'granted') {
+                        showMessage('Уведомления уже включены. Для отключения зайдите в настройки браузера.', 'info');
+                    } else {
+                        if (window.requestNotificationPermission) {
+                            window.requestNotificationPermission();
+                        }
+                    }
+                });
+            }
             
             // Валидация JSON в реальном времени
             document.getElementById('jsonInput').addEventListener('input', function() {
@@ -1236,27 +1307,11 @@ Luca García,32,Madrid,68000"></textarea>
             });
             
             updateConvertButtonText();
-        }
-
-        // Общие переменные
-        let currentData = null;
-        let currentJsonData = null;
-        let currentFormat = 'excel';
-
-        // Остальные функции остаются без изменений, но добавляем отслеживание событий
-        // В функциях convertJsonToFormat, convertExcelToJson, convertCsvToJson
-        // добавляем вызов trackConversion в конце успешной конвертации:
-        // trackConversion('json_to_excel', currentFormat, currentData.length);
-        // trackConversion('excel_to_json', 'json', jsonData.length);
-        // trackConversion('csv_to_json', 'json', jsonData.length);
-    </script>
-
-    <script>
-        // Остальной код конвертера (функции loadMobileAd, switchMode и т.д.)
-        // Переносите их сюда без изменений, но добавьте вызовы trackConversion
-        
-        function loadMobileAd() {
-            // Существующий код без изменений...
+            
+            // Сделаем функции доступными глобально для Firebase модуля
+            window.trackConversion = trackConversion;
+            window.requestNotificationPermission = requestNotificationPermission;
+            window.showMessage = showMessage;
         }
 
         function updateConvertButtonText() {
@@ -1269,23 +1324,467 @@ Luca García,32,Madrid,68000"></textarea>
         }
 
         function switchMode(mode, element) {
-            // Существующий код без изменений...
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.converter-section').forEach(section => section.classList.remove('active'));
+            
+            element.classList.add('active');
+            document.getElementById(mode).classList.add('active');
+            
+            document.getElementById('downloadSection').style.display = 'none';
         }
 
         function switchInputMethod(method, element) {
-            // Существующий код без изменений...
+            document.querySelectorAll('.input-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.input-method').forEach(section => section.classList.remove('active'));
+            
+            element.classList.add('active');
+            document.getElementById(method + '-input').classList.add('active');
         }
 
-        // ... все остальные функции конвертера
-        
-        // В конце каждой функции конвертации добавляйте:
+        function validateJson(jsonString) {
+            try {
+                const parsed = JSON.parse(jsonString);
+                return { valid: true, data: parsed };
+            } catch (e) {
+                return { valid: false, error: e.message };
+            }
+        }
+
+        function validateUrl(url) {
+            try {
+                new URL(url);
+                return url.startsWith('http://') || url.startsWith('https://');
+            } catch {
+                return false;
+            }
+        }
+
+        function validateJsonInput(input) {
+            const jsonText = input.value.trim();
+            if (jsonText) {
+                const validation = validateJson(jsonText);
+                if (validation.valid) {
+                    input.classList.remove('invalid');
+                    input.classList.add('valid');
+                } else {
+                    input.classList.remove('valid');
+                    input.classList.add('invalid');
+                }
+            } else {
+                input.classList.remove('valid', 'invalid');
+            }
+        }
+
+        function validateUrlInput(input) {
+            const url = input.value.trim();
+            if (url) {
+                if (validateUrl(url)) {
+                    input.classList.remove('invalid');
+                    input.classList.add('valid');
+                } else {
+                    input.classList.remove('valid');
+                    input.classList.add('invalid');
+                }
+            } else {
+                input.classList.remove('valid', 'invalid');
+            }
+        }
+
+        async function loadJsonFromUrl() {
+            const urlInput = document.getElementById('jsonUrl');
+            const messageDiv = document.getElementById('jsonMessage');
+            const jsonTextarea = document.getElementById('jsonInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showMessage(messageDiv, 'Пожалуйста, введите ссылку на JSON файл', 'error');
+                return;
+            }
+
+            if (!validateUrl(url)) {
+                showMessage(messageDiv, 'Пожалуйста, введите корректную ссылку', 'error');
+                return;
+            }
+
+            showMessage(messageDiv, 'Загружаю JSON данные через CORS-прокси...', 'info');
+
+            try {
+                const corsProxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                ];
+
+                let response;
+                let lastError;
+
+                for (const proxyUrl of corsProxies) {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000);
+                        
+                        response = await fetch(proxyUrl, {
+                            signal: controller.signal,
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (response.ok) break;
+                        
+                    } catch (error) {
+                        lastError = error;
+                        console.log(`Прокси не сработал, пробуем следующий...`);
+                        continue;
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    throw new Error('Не удалось загрузить JSON файл. Попробуйте скачать файл вручную и вставить содержимое.');
+                }
+
+                const jsonText = await response.text();
+                const validation = validateJson(jsonText);
+
+                if (!validation.valid) {
+                    throw new Error('Полученные данные не являются корректным JSON: ' + validation.error);
+                }
+
+                const manualTab = document.querySelector('.input-tab[data-method="manual"]');
+                switchInputMethod('manual', manualTab);
+
+                jsonTextarea.value = JSON.stringify(validation.data, null, 2);
+                jsonTextarea.classList.add('valid');
+                validateJsonInput(jsonTextarea);
+
+                showMessage(messageDiv, 'JSON данные успешно загружены!', 'success');
+
+            } catch (error) {
+                console.error('Ошибка загрузки JSON:', error);
+                let errorMessage = 'Ошибка загрузки: ' + error.message;
+                showMessage(messageDiv, errorMessage, 'error');
+            }
+        }
+
         function convertJsonToFormat() {
-            // ... существующий код
+            const jsonInput = document.getElementById('jsonInput');
+            const messageDiv = document.getElementById('jsonMessage');
+            const jsonText = jsonInput.value.trim();
+
+            if (!jsonText) {
+                showMessage(messageDiv, 'Пожалуйста, введите JSON данные для конвертации', 'error');
+                return;
+            }
+
+            const validation = validateJson(jsonText);
+            if (!validation.valid) {
+                showMessage(messageDiv, 'Ошибка в JSON: ' + validation.error, 'error');
+                jsonInput.classList.add('invalid');
+                return;
+            }
+
+            jsonInput.classList.remove('invalid');
+            jsonInput.classList.add('valid');
+
+            try {
+                const data = validation.data;
+                if (!Array.isArray(data)) {
+                    showMessage(messageDiv, 'JSON должен содержать массив объектов', 'error');
+                    return;
+                }
+
+                if (data.length === 0) {
+                    showMessage(messageDiv, 'Массив JSON пуст', 'error');
+                    return;
+                }
+
+                currentData = data;
+                currentJsonData = jsonText;
+
+                const downloadSection = document.getElementById('downloadSection');
+                downloadSection.style.display = 'block';
+
+                if (window.trackConversion) {
+                    window.trackConversion('json_to_excel', currentFormat, data.length);
+                }
+
+                if (currentFormat === 'excel') {
+                    downloadAsExcel();
+                } else {
+                    downloadAsCsv();
+                }
+
+            } catch (error) {
+                showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+            }
+        }
+
+        function downloadAsExcel() {
+            try {
+                if (!currentData || currentData.length === 0) {
+                    showMessage(document.getElementById('jsonMessage'), 'Нет данных для конвертации', 'error');
+                    return;
+                }
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(currentData);
+                XLSX.utils.book_append_sheet(wb, ws, "Data");
+                XLSX.writeFile(wb, 'converted_data.xlsx');
+
+                showMessage(document.getElementById('jsonMessage'), 
+                           `Успешно создан Excel файл с ${currentData.length} записями!`, 'success');
+            } catch (error) {
+                showMessage(document.getElementById('jsonMessage'), 
+                           'Ошибка при создании Excel файла: ' + error.message, 'error');
+            }
+        }
+
+        function downloadAsCsv() {
+            try {
+                if (!currentData || currentData.length === 0) {
+                    showMessage(document.getElementById('jsonMessage'), 'Нет данных для конвертации', 'error');
+                    return;
+                }
+
+                const headers = Object.keys(currentData[0]);
+                let csvContent = headers.join(',') + '\n';
+                
+                currentData.forEach(item => {
+                    const row = headers.map(header => {
+                        let value = item[header];
+                        if (value === null || value === undefined) {
+                            value = '';
+                        }
+                        value = String(value);
+                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                            value = '"' + value.replace(/"/g, '""') + '"';
+                        }
+                        return value;
+                    });
+                    csvContent += row.join(',') + '\n';
+                });
+
+                const blob = new Blob(['\uFEFF' + csvContent], { 
+                    type: 'text/csv;charset=utf-8;' 
+                });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'converted_data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showMessage(document.getElementById('jsonMessage'), 
+                           `Успешно создан CSV файл с ${currentData.length} записями!`, 'success');
+            } catch (error) {
+                showMessage(document.getElementById('jsonMessage'), 
+                           'Ошибка при создании CSV файла: ' + error.message, 'error');
+            }
+        }
+
+        function handleExcelFile(input) {
+            const file = input.files[0];
+            const messageDiv = document.getElementById('excelMessage');
+            const convertBtn = document.getElementById('convertExcelBtn');
+
+            if (!file) {
+                convertBtn.disabled = true;
+                return;
+            }
+
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showMessage(messageDiv, 'Пожалуйста, выберите файл Excel (.xlsx или .xls)', 'error');
+                convertBtn.disabled = true;
+                return;
+            }
+
+            currentData = file;
+            convertBtn.disabled = false;
+            showMessage(messageDiv, `Файл "${file.name}" готов к конвертации`, 'success');
+        }
+
+        function convertExcelToJson() {
+            const messageDiv = document.getElementById('excelMessage');
             
-            // После успешной конвертации:
-            // if (window.trackConversion && currentData) {
-            //     window.trackConversion('json_to_excel', currentFormat, currentData.length);
-            // }
+            if (!currentData) {
+                showMessage(messageDiv, 'Пожалуйста, выберите Excel файл', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if (jsonData.length === 0) {
+                        showMessage(messageDiv, 'Файл Excel не содержит данных', 'error');
+                        return;
+                    }
+                    
+                    const jsonString = JSON.stringify(jsonData, null, 2);
+                    
+                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'converted_data.json');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    if (window.trackConversion) {
+                        window.trackConversion('excel_to_json', 'json', jsonData.length);
+                    }
+
+                    showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей в JSON!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Ошибка конвертации:', error);
+                    showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showMessage(messageDiv, 'Ошибка чтения файла', 'error');
+            };
+            
+            reader.readAsArrayBuffer(currentData);
+        }
+
+        function convertCsvToJson() {
+            const csvInput = document.getElementById('csvInput');
+            const messageDiv = document.getElementById('csvMessage');
+            const csvText = csvInput.value.trim();
+
+            if (!csvText) {
+                showMessage(messageDiv, 'Пожалуйста, введите CSV данные', 'error');
+                return;
+            }
+
+            try {
+                const lines = csvText.split('\n');
+                if (lines.length < 2) {
+                    showMessage(messageDiv, 'CSV должен содержать заголовки и хотя бы одну строку данных', 'error');
+                    return;
+                }
+
+                const headers = lines[0].split(',').map(h => h.trim());
+                const jsonData = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+                    
+                    const values = parseCsvLine(lines[i]);
+                    const obj = {};
+                    
+                    headers.forEach((header, index) => {
+                        obj[header] = values[index] || '';
+                    });
+                    
+                    jsonData.push(obj);
+                }
+
+                if (jsonData.length === 0) {
+                    showMessage(messageDiv, 'CSV не содержит данных', 'error');
+                    return;
+                }
+
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                
+                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'converted_from_csv.json');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                if (window.trackConversion) {
+                    window.trackConversion('csv_to_json', 'json', jsonData.length);
+                }
+
+                showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей из CSV в JSON!`, 'success');
+
+            } catch (error) {
+                showMessage(messageDiv, 'Ошибка при конвертации CSV: ' + error.message, 'error');
+            }
+        }
+
+        function parseCsvLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+
+        function showMessage(messageDiv, text, type) {
+            if (messageDiv) {
+                messageDiv.innerHTML = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            } else {
+                console.log(`${type}: ${text}`);
+            }
+        }
+
+        function clearJsonInput() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('jsonInput').classList.remove('valid', 'invalid');
+            document.getElementById('jsonUrl').value = '';
+            document.getElementById('jsonUrl').classList.remove('valid', 'invalid');
+            document.getElementById('jsonMessage').style.display = 'none';
+            document.getElementById('downloadSection').style.display = 'none';
+            currentData = null;
+            currentJsonData = null;
+        }
+
+        function clearExcelInput() {
+            document.getElementById('excelFile').value = '';
+            document.getElementById('convertExcelBtn').disabled = true;
+            document.getElementById('excelMessage').style.display = 'none';
+            currentData = null;
+        }
+
+        function clearCsvInput() {
+            document.getElementById('csvInput').value = '';
+            document.getElementById('csvMessage').style.display = 'none';
         }
     </script>
 </body>

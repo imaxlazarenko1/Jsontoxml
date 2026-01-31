@@ -129,6 +129,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <style>
+        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -962,18 +963,19 @@ Luca García,32,Madrid,68000"></textarea>
         </footer>
     </div>
 
-    <!-- Firebase SDK и основной JavaScript -->
+    <!-- Основной JavaScript -->
     <script>
-        // Глобальные переменные
+        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ФУНКЦИИ ==========
+        
         let currentData = null;
         let currentJsonData = null;
         let currentFormat = 'excel';
-        let firebaseApp = null;
+        let firebaseInitialized = false;
         let firebaseAnalytics = null;
-        let firebaseMessaging = null;
-
-        // Функция для показа сообщений
-        function showMessage(messageDiv, text, type) {
+        
+        // Простая функция для показа сообщений
+        function showSimpleMessage(text, type = 'info') {
+            const messageDiv = document.getElementById('jsonMessage');
             if (messageDiv) {
                 messageDiv.innerHTML = text;
                 messageDiv.className = `message ${type}`;
@@ -981,59 +983,115 @@ Luca García,32,Madrid,68000"></textarea>
                 setTimeout(() => {
                     messageDiv.style.display = 'none';
                 }, 5000);
-            } else {
-                console.log(`${type}: ${text}`);
             }
+            console.log(`${type}: ${text}`);
         }
-
-        // Функция для отслеживания конверсий
-        function trackConversion(type, format, recordsCount) {
-            if (firebaseAnalytics) {
-                firebaseAnalytics.logEvent('conversion', {
-                    conversion_type: type,
-                    format: format,
-                    records_count: recordsCount
+        
+        // Функция для управления уведомлениями (простая версия)
+        function manageNotificationsSimple() {
+            if (!('Notification' in window)) {
+                showSimpleMessage('Ваш браузер не поддерживает уведомления', 'error');
+                return;
+            }
+            
+            if (Notification.permission === 'granted') {
+                showSimpleMessage(
+                    'Уведомления уже включены. Для отключения зайдите в настройки браузера:<br>' +
+                    '• Chrome: Настройки → Конфиденциальность и безопасность → Настройки сайтов → Уведомления<br>' +
+                    '• Firefox: Настройки → Конфиденциальность и защита → Разрешения → Уведомления<br>' +
+                    '• Safari: Настройки → Сайты → Уведомления',
+                    'info'
+                );
+            } else if (Notification.permission === 'denied') {
+                showSimpleMessage(
+                    'Уведомления заблокированы. Разрешите уведомления в настройках браузера.<br>' +
+                    '• Chrome: Настройки → Конфиденциальность и безопасность → Настройки сайтов → Уведомления<br>' +
+                    '• Firefox: Настройки → Конфиденциальность и защита → Разрешения → Уведомления<br>' +
+                    '• Safari: Настройки → Сайты → Уведомления',
+                    'info'
+                );
+            } else {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        showSimpleMessage('Уведомления успешно включены!', 'success');
+                        if (firebaseAnalytics) {
+                            firebaseAnalytics.logEvent('notifications_enabled');
+                        }
+                    } else {
+                        showSimpleMessage('Вы отказались от получения уведомлений', 'info');
+                    }
                 });
             }
         }
-
-        // Инициализация Firebase
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM загружен, инициализируем приложение...');
+            
+            // Загрузка рекламы для мобильных устройств
+            loadMobileAd();
+            
+            // Инициализация основного функционала конвертера
+            initializeMainFunctionality();
+            
+            // Инициализация Firebase (асинхронно, не блокирует основной функционал)
+            setTimeout(initializeFirebase, 1000);
+        });
+        
+        // ========== FIREBASE ИНИЦИАЛИЗАЦИЯ ==========
+        
         async function initializeFirebase() {
             try {
+                console.log('Инициализация Firebase...');
+                
                 // Динамически загружаем Firebase
-                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js");
-                const { getAnalytics, logEvent } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js");
+                const firebaseScript = document.createElement('script');
+                firebaseScript.type = 'module';
+                firebaseScript.textContent = `
+                    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+                    import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+                    
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyDUpNnSCiD6dbvS3KO4uSbkymCgB5yRoNo",
+                        authDomain: "eidos-push-notifications.firebaseapp.com",
+                        projectId: "eidos-push-notifications",
+                        storageBucket: "eidos-push-notifications.firebasestorage.app",
+                        messagingSenderId: "803790504785",
+                        appId: "1:803790504785:web:bab0b4933aad016d24c970",
+                        measurementId: "G-XD8XQR79RH"
+                    };
+                    
+                    try {
+                        const app = initializeApp(firebaseConfig);
+                        const analytics = getAnalytics(app);
+                        
+                        logEvent(analytics, 'page_view', {
+                            page_title: 'JSON to Excel Converter',
+                            page_location: window.location.href
+                        });
+                        
+                        // Сохраняем analytics в глобальной переменной
+                        window.firebaseAnalytics = analytics;
+                        window.firebaseInitialized = true;
+                        
+                        console.log('Firebase Analytics успешно инициализирован');
+                        
+                        // Инициализируем уведомления
+                        initializeFirebaseNotifications();
+                        
+                    } catch (error) {
+                        console.warn('Ошибка инициализации Firebase:', error);
+                    }
+                `;
                 
-                const firebaseConfig = {
-                    apiKey: "AIzaSyDUpNnSCiD6dbvS3KO4uSbkymCgB5yRoNo",
-                    authDomain: "eidos-push-notifications.firebaseapp.com",
-                    projectId: "eidos-push-notifications",
-                    storageBucket: "eidos-push-notifications.firebasestorage.app",
-                    messagingSenderId: "803790504785",
-                    appId: "1:803790504785:web:bab0b4933aad016d24c970",
-                    measurementId: "G-XD8XQR79RH"
-                };
-
-                firebaseApp = initializeApp(firebaseConfig);
-                firebaseAnalytics = getAnalytics(firebaseApp);
-                
-                logEvent(firebaseAnalytics, 'page_view', {
-                    page_title: 'JSON to Excel Converter',
-                    page_location: window.location.href
-                });
-                
-                console.log('Firebase Analytics initialized');
-                
-                // Инициализируем уведомления
-                initializePushNotifications();
+                document.head.appendChild(firebaseScript);
                 
             } catch (error) {
-                console.warn('Firebase initialization error:', error);
+                console.warn('Ошибка загрузки Firebase:', error);
             }
         }
-
-        // Инициализация push-уведомлений
-        async function initializePushNotifications() {
+        
+        async function initializeFirebaseNotifications() {
             try {
                 const { getMessaging, getToken, onMessage, isSupported } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js");
                 
@@ -1042,28 +1100,19 @@ Luca García,32,Madrid,68000"></textarea>
                     console.log('Push notifications are not supported in this browser');
                     return;
                 }
-
-                firebaseMessaging = getMessaging(firebaseApp);
                 
                 // Показываем панель уведомлений через 3 секунды
                 setTimeout(() => {
                     showNotificationPanel();
                 }, 3000);
-
-                // Обработка входящих сообщений
-                onMessage(firebaseMessaging, (payload) => {
-                    console.log('Message received:', payload);
-                    showPushNotification(payload);
-                });
-
-                // Проверяем существующий токен
-                await checkExistingToken();
-
+                
+                console.log('Firebase Notifications инициализированы');
+                
             } catch (error) {
-                console.warn('Push notifications initialization error:', error);
+                console.warn('Ошибка инициализации уведомлений:', error);
             }
         }
-
+        
         // Показать панель уведомлений
         function showNotificationPanel() {
             const notificationPanel = document.getElementById('notificationPanel');
@@ -1073,149 +1122,12 @@ Luca García,32,Madrid,68000"></textarea>
                 notificationPanel.classList.add('show');
                 localStorage.setItem('notificationPanelShown', 'true');
                 
-                if (firebaseAnalytics) {
-                    firebaseAnalytics.logEvent('notification_prompt_shown');
+                if (window.firebaseAnalytics) {
+                    window.firebaseAnalytics.logEvent('notification_prompt_shown');
                 }
             }
         }
-
-        // Проверить существующий токен
-        async function checkExistingToken() {
-            try {
-                const { getToken } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js");
-                
-                const currentToken = await getToken(firebaseMessaging, { 
-                    vapidKey: 'BP0x2Vaz3gYvYgI0baVqFDQ7bB3TjLCiu8CBCsMkiVtYkq7XYpMwc9cR3h0PAJTO1Kp2JakHwrvUoCl-0Gfvfhs' 
-                });
-                
-                if (currentToken) {
-                    console.log('Current token:', currentToken);
-                    await sendTokenToServer(currentToken);
-                    showNotificationButton();
-                }
-            } catch (error) {
-                console.log('No existing token:', error);
-            }
-        }
-
-        // Отправить токен на сервер
-        async function sendTokenToServer(token) {
-            try {
-                console.log('Sending token to server:', token);
-                // Реализуйте отправку токена на ваш сервер
-            } catch (error) {
-                console.error('Error sending token to server:', error);
-            }
-        }
-
-        // Показать кнопку уведомлений
-        function showNotificationButton() {
-            const pushButton = document.getElementById('requestPushPermission');
-            if (pushButton) {
-                pushButton.style.display = 'flex';
-            }
-        }
-
-        // Запрос разрешения на уведомления
-        async function requestNotificationPermission() {
-            try {
-                const permission = await Notification.requestPermission();
-                
-                if (firebaseAnalytics) {
-                    firebaseAnalytics.logEvent('notification_permission', {
-                        permission: permission
-                    });
-                }
-
-                if (permission === 'granted') {
-                    console.log('Notification permission granted.');
-                    
-                    try {
-                        const { getToken } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js");
-                        
-                        const currentToken = await getToken(firebaseMessaging, { 
-                            vapidKey: 'BP0x2Vaz3gYvYgI0baVqFDQ7bB3TjLCiu8CBCsMkiVtYkq7XYpMwc9cR3h0PAJTO1Kp2JakHwrvUoCl-0Gfvfhs' 
-                        });
-                        
-                        if (currentToken) {
-                            console.log('Token received:', currentToken);
-                            await sendTokenToServer(currentToken);
-                            showNotificationButton();
-                            
-                            if (firebaseAnalytics) {
-                                firebaseAnalytics.logEvent('notification_token_received');
-                            }
-                            
-                            const messageDiv = document.getElementById('jsonMessage') || 
-                                               document.getElementById('excelMessage') || 
-                                               document.getElementById('csvMessage');
-                            showMessage(messageDiv, 'Уведомления успешно включены!', 'success');
-                        }
-                    } catch (tokenError) {
-                        console.error('Error getting token:', tokenError);
-                        const messageDiv = document.getElementById('jsonMessage');
-                        showMessage(messageDiv, 'Ошибка при получении токена уведомлений', 'error');
-                    }
-                } else {
-                    console.log('Notification permission denied.');
-                    const messageDiv = document.getElementById('jsonMessage');
-                    showMessage(messageDiv, 'Уведомления отключены', 'info');
-                }
-            } catch (error) {
-                console.error('Error requesting notification permission:', error);
-                const messageDiv = document.getElementById('jsonMessage');
-                showMessage(messageDiv, 'Ошибка при запросе разрешения', 'error');
-            }
-        }
-
-        // Показать push-уведомление
-        function showPushNotification(payload) {
-            const { title, body, icon } = payload.notification;
-            
-            if (Notification.permission === 'granted') {
-                const notification = new Notification(title, {
-                    body,
-                    icon: icon || '/favicon/favicon-32x32.png',
-                    badge: '/favicon/favicon-32x32.png'
-                });
-                
-                notification.onclick = () => {
-                    window.focus();
-                    notification.close();
-                };
-            }
-        }
-
-        // Управление уведомлениями
-        function manageNotifications() {
-            if (Notification.permission === 'granted') {
-                showMessage(document.getElementById('jsonMessage'), 
-                    'Уведомления уже включены. Для отключения зайдите в настройки браузера: ' +
-                    '<br>Chrome: Настройки → Конфиденциальность и безопасность → Настройки сайтов → Уведомления' +
-                    '<br>Firefox: Настройки → Конфиденциальность и защита → Разрешения → Уведомления', 
-                    'info');
-            } else if (Notification.permission === 'denied') {
-                showMessage(document.getElementById('jsonMessage'), 
-                    'Уведомления заблокированы. Разрешите уведомления в настройках браузера.', 
-                    'info');
-            } else {
-                // Запрос разрешения
-                requestNotificationPermission();
-            }
-        }
-
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            // Загрузка рекламы для мобильных устройств
-            loadMobileAd();
-            
-            // Инициализация Firebase
-            initializeFirebase();
-            
-            // Инициализация основного функционала конвертера
-            initializeMainFunctionality();
-        });
-
+        
         // ========== ФУНКЦИИ КОНВЕРТЕРА ==========
         
         function loadMobileAd() {
@@ -1262,8 +1174,10 @@ Luca García,32,Madrid,68000"></textarea>
                 }, 1000);
             }
         }
-
+        
         function initializeMainFunctionality() {
+            console.log('Инициализация основного функционала...');
+            
             // Назначаем обработчики для кнопок переключения режимов
             document.querySelectorAll('.mode-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -1305,21 +1219,30 @@ Luca García,32,Madrid,68000"></textarea>
             // Обработчики для уведомлений
             const requestPushButton = document.getElementById('requestPushPermission');
             if (requestPushButton) {
-                requestPushButton.addEventListener('click', requestNotificationPermission);
+                requestPushButton.addEventListener('click', manageNotificationsSimple);
             }
             
             document.getElementById('notificationAllow').addEventListener('click', async function() {
                 document.getElementById('notificationPanel').classList.remove('show');
-                await requestNotificationPermission();
+                manageNotificationsSimple();
             });
             
             document.getElementById('notificationLater').addEventListener('click', function() {
                 document.getElementById('notificationPanel').classList.remove('show');
             });
             
+            // ВАЖНО: Делаем кнопку управления уведомлениями активной
             const manageNotificationsBtn = document.getElementById('manageNotifications');
             if (manageNotificationsBtn) {
-                manageNotificationsBtn.addEventListener('click', manageNotifications);
+                console.log('Назначаем обработчик для кнопки управления уведомлениями');
+                manageNotificationsBtn.addEventListener('click', function(e) {
+                    console.log('Клик по кнопке управления уведомлениями');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    manageNotificationsSimple();
+                });
+            } else {
+                console.error('Кнопка управления уведомлениями не найдена!');
             }
             
             // Валидация JSON в реальном времени
@@ -1333,7 +1256,12 @@ Luca García,32,Madrid,68000"></textarea>
             });
             
             updateConvertButtonText();
+            
+            console.log('Основной функционал инициализирован');
         }
+        
+        // Остальные функции конвертера остаются без изменений
+        // ... (все функции конвертера из предыдущего кода)
 
         function updateConvertButtonText() {
             const btnText = document.getElementById('convertBtnText');
@@ -1418,16 +1346,16 @@ Luca García,32,Madrid,68000"></textarea>
             const url = urlInput.value.trim();
 
             if (!url) {
-                showMessage(messageDiv, 'Пожалуйста, введите ссылку на JSON файл', 'error');
+                showSimpleMessage('Пожалуйста, введите ссылку на JSON файл', 'error');
                 return;
             }
 
             if (!validateUrl(url)) {
-                showMessage(messageDiv, 'Пожалуйста, введите корректную ссылку', 'error');
+                showSimpleMessage('Пожалуйста, введите корректную ссылку', 'error');
                 return;
             }
 
-            showMessage(messageDiv, 'Загружаю JSON данные через CORS-прокси...', 'info');
+            showSimpleMessage('Загружаю JSON данные через CORS-прокси...', 'info');
 
             try {
                 const corsProxies = [
@@ -1481,12 +1409,12 @@ Luca García,32,Madrid,68000"></textarea>
                 jsonTextarea.classList.add('valid');
                 validateJsonInput(jsonTextarea);
 
-                showMessage(messageDiv, 'JSON данные успешно загружены!', 'success');
+                showSimpleMessage('JSON данные успешно загружены!', 'success');
 
             } catch (error) {
                 console.error('Ошибка загрузки JSON:', error);
                 let errorMessage = 'Ошибка загрузки: ' + error.message;
-                showMessage(messageDiv, errorMessage, 'error');
+                showSimpleMessage(errorMessage, 'error');
             }
         }
 
@@ -1496,13 +1424,13 @@ Luca García,32,Madrid,68000"></textarea>
             const jsonText = jsonInput.value.trim();
 
             if (!jsonText) {
-                showMessage(messageDiv, 'Пожалуйста, введите JSON данные для конвертации', 'error');
+                showSimpleMessage('Пожалуйста, введите JSON данные для конвертации', 'error');
                 return;
             }
 
             const validation = validateJson(jsonText);
             if (!validation.valid) {
-                showMessage(messageDiv, 'Ошибка в JSON: ' + validation.error, 'error');
+                showSimpleMessage('Ошибка в JSON: ' + validation.error, 'error');
                 jsonInput.classList.add('invalid');
                 return;
             }
@@ -1513,12 +1441,12 @@ Luca García,32,Madrid,68000"></textarea>
             try {
                 const data = validation.data;
                 if (!Array.isArray(data)) {
-                    showMessage(messageDiv, 'JSON должен содержать массив объектов', 'error');
+                    showSimpleMessage('JSON должен содержать массив объектов', 'error');
                     return;
                 }
 
                 if (data.length === 0) {
-                    showMessage(messageDiv, 'Массив JSON пуст', 'error');
+                    showSimpleMessage('Массив JSON пуст', 'error');
                     return;
                 }
 
@@ -1528,7 +1456,14 @@ Luca García,32,Madrid,68000"></textarea>
                 const downloadSection = document.getElementById('downloadSection');
                 downloadSection.style.display = 'block';
 
-                trackConversion('json_to_excel', currentFormat, data.length);
+                // Трекинг события
+                if (window.firebaseAnalytics) {
+                    window.firebaseAnalytics.logEvent('conversion', {
+                        conversion_type: 'json_to_excel',
+                        format: currentFormat,
+                        records_count: data.length
+                    });
+                }
 
                 if (currentFormat === 'excel') {
                     downloadAsExcel();
@@ -1537,14 +1472,14 @@ Luca García,32,Madrid,68000"></textarea>
                 }
 
             } catch (error) {
-                showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+                showSimpleMessage('Ошибка при конвертации: ' + error.message, 'error');
             }
         }
 
         function downloadAsExcel() {
             try {
                 if (!currentData || currentData.length === 0) {
-                    showMessage(document.getElementById('jsonMessage'), 'Нет данных для конвертации', 'error');
+                    showSimpleMessage('Нет данных для конвертации', 'error');
                     return;
                 }
 
@@ -1553,18 +1488,16 @@ Luca García,32,Madrid,68000"></textarea>
                 XLSX.utils.book_append_sheet(wb, ws, "Data");
                 XLSX.writeFile(wb, 'converted_data.xlsx');
 
-                showMessage(document.getElementById('jsonMessage'), 
-                           `Успешно создан Excel файл с ${currentData.length} записями!`, 'success');
+                showSimpleMessage(`Успешно создан Excel файл с ${currentData.length} записями!`, 'success');
             } catch (error) {
-                showMessage(document.getElementById('jsonMessage'), 
-                           'Ошибка при создании Excel файла: ' + error.message, 'error');
+                showSimpleMessage('Ошибка при создании Excel файла: ' + error.message, 'error');
             }
         }
 
         function downloadAsCsv() {
             try {
                 if (!currentData || currentData.length === 0) {
-                    showMessage(document.getElementById('jsonMessage'), 'Нет данных для конвертации', 'error');
+                    showSimpleMessage('Нет данных для конвертации', 'error');
                     return;
                 }
 
@@ -1598,11 +1531,9 @@ Luca García,32,Madrid,68000"></textarea>
                 link.click();
                 document.body.removeChild(link);
 
-                showMessage(document.getElementById('jsonMessage'), 
-                           `Успешно создан CSV файл с ${currentData.length} записями!`, 'success');
+                showSimpleMessage(`Успешно создан CSV файл с ${currentData.length} записями!`, 'success');
             } catch (error) {
-                showMessage(document.getElementById('jsonMessage'), 
-                           'Ошибка при создании CSV файла: ' + error.message, 'error');
+                showSimpleMessage('Ошибка при создании CSV файла: ' + error.message, 'error');
             }
         }
 
@@ -1617,21 +1548,21 @@ Luca García,32,Madrid,68000"></textarea>
             }
 
             if (!file.name.match(/\.(xlsx|xls)$/i)) {
-                showMessage(messageDiv, 'Пожалуйста, выберите файл Excel (.xlsx или .xls)', 'error');
+                showSimpleMessage('Пожалуйста, выберите файл Excel (.xlsx или .xls)', 'error');
                 convertBtn.disabled = true;
                 return;
             }
 
             currentData = file;
             convertBtn.disabled = false;
-            showMessage(messageDiv, `Файл "${file.name}" готов к конвертации`, 'success');
+            showSimpleMessage(`Файл "${file.name}" готов к конвертации`, 'success');
         }
 
         function convertExcelToJson() {
             const messageDiv = document.getElementById('excelMessage');
             
             if (!currentData) {
-                showMessage(messageDiv, 'Пожалуйста, выберите Excel файл', 'error');
+                showSimpleMessage('Пожалуйста, выберите Excel файл', 'error');
                 return;
             }
 
@@ -1647,7 +1578,7 @@ Luca García,32,Madrid,68000"></textarea>
                     const jsonData = XLSX.utils.sheet_to_json(worksheet);
                     
                     if (jsonData.length === 0) {
-                        showMessage(messageDiv, 'Файл Excel не содержит данных', 'error');
+                        showSimpleMessage('Файл Excel не содержит данных', 'error');
                         return;
                     }
                     
@@ -1663,18 +1594,25 @@ Luca García,32,Madrid,68000"></textarea>
                     link.click();
                     document.body.removeChild(link);
 
-                    trackConversion('excel_to_json', 'json', jsonData.length);
+                    // Трекинг события
+                    if (window.firebaseAnalytics) {
+                        window.firebaseAnalytics.logEvent('conversion', {
+                            conversion_type: 'excel_to_json',
+                            format: 'json',
+                            records_count: jsonData.length
+                        });
+                    }
 
-                    showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей в JSON!`, 'success');
+                    showSimpleMessage(`Успешно конвертировано ${jsonData.length} записей в JSON!`, 'success');
                     
                 } catch (error) {
                     console.error('Ошибка конвертации:', error);
-                    showMessage(messageDiv, 'Ошибка при конвертации: ' + error.message, 'error');
+                    showSimpleMessage('Ошибка при конвертации: ' + error.message, 'error');
                 }
             };
             
             reader.onerror = function() {
-                showMessage(messageDiv, 'Ошибка чтения файла', 'error');
+                showSimpleMessage('Ошибка чтения файла', 'error');
             };
             
             reader.readAsArrayBuffer(currentData);
@@ -1686,14 +1624,14 @@ Luca García,32,Madrid,68000"></textarea>
             const csvText = csvInput.value.trim();
 
             if (!csvText) {
-                showMessage(messageDiv, 'Пожалуйста, введите CSV данные', 'error');
+                showSimpleMessage('Пожалуйста, введите CSV данные', 'error');
                 return;
             }
 
             try {
                 const lines = csvText.split('\n');
                 if (lines.length < 2) {
-                    showMessage(messageDiv, 'CSV должен содержать заголовки и хотя бы одну строку данных', 'error');
+                    showSimpleMessage('CSV должен содержать заголовки и хотя бы одну строку данных', 'error');
                     return;
                 }
 
@@ -1714,7 +1652,7 @@ Luca García,32,Madrid,68000"></textarea>
                 }
 
                 if (jsonData.length === 0) {
-                    showMessage(messageDiv, 'CSV не содержит данных', 'error');
+                    showSimpleMessage('CSV не содержит данных', 'error');
                     return;
                 }
 
@@ -1730,12 +1668,19 @@ Luca García,32,Madrid,68000"></textarea>
                 link.click();
                 document.body.removeChild(link);
 
-                trackConversion('csv_to_json', 'json', jsonData.length);
+                // Трекинг события
+                if (window.firebaseAnalytics) {
+                    window.firebaseAnalytics.logEvent('conversion', {
+                        conversion_type: 'csv_to_json',
+                        format: 'json',
+                        records_count: jsonData.length
+                    });
+                }
 
-                showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей из CSV в JSON!`, 'success');
+                showSimpleMessage(`Успешно конвертировано ${jsonData.length} записей из CSV в JSON!`, 'success');
 
             } catch (error) {
-                showMessage(messageDiv, 'Ошибка при конвертации CSV: ' + error.message, 'error');
+                showSimpleMessage('Ошибка при конвертации CSV: ' + error.message, 'error');
             }
         }
 

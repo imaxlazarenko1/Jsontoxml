@@ -962,61 +962,96 @@ Luca García,32,Madrid,68000"></textarea>
         </footer>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
-        import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDUpNnSCiD6dbvS3KO4uSbkymCgB5yRoNo",
-            authDomain: "eidos-push-notifications.firebaseapp.com",
-            projectId: "eidos-push-notifications",
-            storageBucket: "eidos-push-notifications.firebasestorage.app",
-            messagingSenderId: "803790504785",
-            appId: "1:803790504785:web:bab0b4933aad016d24c970",
-            measurementId: "G-XD8XQR79RH"
-        };
-
-        // Инициализация Firebase
-        const app = initializeApp(firebaseConfig);
-        let analytics = null;
-        let messaging = null;
-
-        // Инициализация аналитики
-        try {
-            analytics = getAnalytics(app);
-            logEvent(analytics, 'page_view', {
-                page_title: 'JSON to Excel Converter',
-                page_location: window.location.href
-            });
-        } catch (error) {
-            console.warn('Analytics initialization error:', error);
-        }
-
-        // Глобальные переменные для конвертера
+    <!-- Firebase SDK и основной JavaScript -->
+    <script>
+        // Глобальные переменные
         let currentData = null;
         let currentJsonData = null;
         let currentFormat = 'excel';
+        let firebaseApp = null;
+        let firebaseAnalytics = null;
+        let firebaseMessaging = null;
 
-        // Функции для уведомлений
+        // Функция для показа сообщений
+        function showMessage(messageDiv, text, type) {
+            if (messageDiv) {
+                messageDiv.innerHTML = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            } else {
+                console.log(`${type}: ${text}`);
+            }
+        }
+
+        // Функция для отслеживания конверсий
+        function trackConversion(type, format, recordsCount) {
+            if (firebaseAnalytics) {
+                firebaseAnalytics.logEvent('conversion', {
+                    conversion_type: type,
+                    format: format,
+                    records_count: recordsCount
+                });
+            }
+        }
+
+        // Инициализация Firebase
+        async function initializeFirebase() {
+            try {
+                // Динамически загружаем Firebase
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js");
+                const { getAnalytics, logEvent } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js");
+                
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDUpNnSCiD6dbvS3KO4uSbkymCgB5yRoNo",
+                    authDomain: "eidos-push-notifications.firebaseapp.com",
+                    projectId: "eidos-push-notifications",
+                    storageBucket: "eidos-push-notifications.firebasestorage.app",
+                    messagingSenderId: "803790504785",
+                    appId: "1:803790504785:web:bab0b4933aad016d24c970",
+                    measurementId: "G-XD8XQR79RH"
+                };
+
+                firebaseApp = initializeApp(firebaseConfig);
+                firebaseAnalytics = getAnalytics(firebaseApp);
+                
+                logEvent(firebaseAnalytics, 'page_view', {
+                    page_title: 'JSON to Excel Converter',
+                    page_location: window.location.href
+                });
+                
+                console.log('Firebase Analytics initialized');
+                
+                // Инициализируем уведомления
+                initializePushNotifications();
+                
+            } catch (error) {
+                console.warn('Firebase initialization error:', error);
+            }
+        }
+
+        // Инициализация push-уведомлений
         async function initializePushNotifications() {
             try {
+                const { getMessaging, getToken, onMessage, isSupported } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js");
+                
                 const supported = await isSupported();
                 if (!supported) {
                     console.log('Push notifications are not supported in this browser');
                     return;
                 }
 
-                messaging = getMessaging(app);
+                firebaseMessaging = getMessaging(firebaseApp);
                 
-                // Показываем панель уведомлений через 5 секунд
+                // Показываем панель уведомлений через 3 секунды
                 setTimeout(() => {
                     showNotificationPanel();
-                }, 5000);
+                }, 3000);
 
                 // Обработка входящих сообщений
-                onMessage(messaging, (payload) => {
+                onMessage(firebaseMessaging, (payload) => {
                     console.log('Message received:', payload);
                     showPushNotification(payload);
                 });
@@ -1038,8 +1073,8 @@ Luca García,32,Madrid,68000"></textarea>
                 notificationPanel.classList.add('show');
                 localStorage.setItem('notificationPanelShown', 'true');
                 
-                if (analytics) {
-                    logEvent(analytics, 'notification_prompt_shown');
+                if (firebaseAnalytics) {
+                    firebaseAnalytics.logEvent('notification_prompt_shown');
                 }
             }
         }
@@ -1047,16 +1082,15 @@ Luca García,32,Madrid,68000"></textarea>
         // Проверить существующий токен
         async function checkExistingToken() {
             try {
-                const currentToken = await getToken(messaging, { 
+                const { getToken } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js");
+                
+                const currentToken = await getToken(firebaseMessaging, { 
                     vapidKey: 'BP0x2Vaz3gYvYgI0baVqFDQ7bB3TjLCiu8CBCsMkiVtYkq7XYpMwc9cR3h0PAJTO1Kp2JakHwrvUoCl-0Gfvfhs' 
                 });
                 
                 if (currentToken) {
                     console.log('Current token:', currentToken);
-                    // Отправить токен на ваш сервер
                     await sendTokenToServer(currentToken);
-                    
-                    // Показать кнопку управления
                     showNotificationButton();
                 }
             } catch (error) {
@@ -1067,14 +1101,8 @@ Luca García,32,Madrid,68000"></textarea>
         // Отправить токен на сервер
         async function sendTokenToServer(token) {
             try {
-                // Реализуйте отправку токена на ваш сервер
                 console.log('Sending token to server:', token);
-                // Пример:
-                // await fetch('/api/save-token', {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify({ token })
-                // });
+                // Реализуйте отправку токена на ваш сервер
             } catch (error) {
                 console.error('Error sending token to server:', error);
             }
@@ -1093,8 +1121,8 @@ Luca García,32,Madrid,68000"></textarea>
             try {
                 const permission = await Notification.requestPermission();
                 
-                if (analytics) {
-                    logEvent(analytics, 'notification_permission', {
+                if (firebaseAnalytics) {
+                    firebaseAnalytics.logEvent('notification_permission', {
                         permission: permission
                     });
                 }
@@ -1103,7 +1131,9 @@ Luca García,32,Madrid,68000"></textarea>
                     console.log('Notification permission granted.');
                     
                     try {
-                        const currentToken = await getToken(messaging, { 
+                        const { getToken } = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-messaging.js");
+                        
+                        const currentToken = await getToken(firebaseMessaging, { 
                             vapidKey: 'BP0x2Vaz3gYvYgI0baVqFDQ7bB3TjLCiu8CBCsMkiVtYkq7XYpMwc9cR3h0PAJTO1Kp2JakHwrvUoCl-0Gfvfhs' 
                         });
                         
@@ -1112,23 +1142,29 @@ Luca García,32,Madrid,68000"></textarea>
                             await sendTokenToServer(currentToken);
                             showNotificationButton();
                             
-                            if (analytics) {
-                                logEvent(analytics, 'notification_token_received');
+                            if (firebaseAnalytics) {
+                                firebaseAnalytics.logEvent('notification_token_received');
                             }
                             
-                            showMessage('Уведомления успешно включены!', 'success');
+                            const messageDiv = document.getElementById('jsonMessage') || 
+                                               document.getElementById('excelMessage') || 
+                                               document.getElementById('csvMessage');
+                            showMessage(messageDiv, 'Уведомления успешно включены!', 'success');
                         }
                     } catch (tokenError) {
                         console.error('Error getting token:', tokenError);
-                        showMessage('Ошибка при получении токена уведомлений', 'error');
+                        const messageDiv = document.getElementById('jsonMessage');
+                        showMessage(messageDiv, 'Ошибка при получении токена уведомлений', 'error');
                     }
                 } else {
                     console.log('Notification permission denied.');
-                    showMessage('Уведомления отключены', 'info');
+                    const messageDiv = document.getElementById('jsonMessage');
+                    showMessage(messageDiv, 'Уведомления отключены', 'info');
                 }
             } catch (error) {
                 console.error('Error requesting notification permission:', error);
-                showMessage('Ошибка при запросе разрешения', 'error');
+                const messageDiv = document.getElementById('jsonMessage');
+                showMessage(messageDiv, 'Ошибка при запросе разрешения', 'error');
             }
         }
 
@@ -1150,31 +1186,36 @@ Luca García,32,Madrid,68000"></textarea>
             }
         }
 
-        // Отслеживание событий конвертации
-        function trackConversion(type, format, recordsCount) {
-            if (analytics) {
-                logEvent(analytics, 'conversion', {
-                    conversion_type: type,
-                    format: format,
-                    records_count: recordsCount
-                });
+        // Управление уведомлениями
+        function manageNotifications() {
+            if (Notification.permission === 'granted') {
+                showMessage(document.getElementById('jsonMessage'), 
+                    'Уведомления уже включены. Для отключения зайдите в настройки браузера: ' +
+                    '<br>Chrome: Настройки → Конфиденциальность и безопасность → Настройки сайтов → Уведомления' +
+                    '<br>Firefox: Настройки → Конфиденциальность и защита → Разрешения → Уведомления', 
+                    'info');
+            } else if (Notification.permission === 'denied') {
+                showMessage(document.getElementById('jsonMessage'), 
+                    'Уведомления заблокированы. Разрешите уведомления в настройках браузера.', 
+                    'info');
+            } else {
+                // Запрос разрешения
+                requestNotificationPermission();
             }
         }
 
         // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             // Загрузка рекламы для мобильных устройств
             loadMobileAd();
             
-            // Инициализация push-уведомлений
-            initializePushNotifications();
-
+            // Инициализация Firebase
+            initializeFirebase();
+            
             // Инициализация основного функционала конвертера
             initializeMainFunctionality();
         });
-    </script>
 
-    <script>
         // ========== ФУНКЦИИ КОНВЕРТЕРА ==========
         
         function loadMobileAd() {
@@ -1264,19 +1305,12 @@ Luca García,32,Madrid,68000"></textarea>
             // Обработчики для уведомлений
             const requestPushButton = document.getElementById('requestPushPermission');
             if (requestPushButton) {
-                requestPushButton.addEventListener('click', function() {
-                    // Используем глобальную функцию из Firebase модуля
-                    if (window.requestNotificationPermission) {
-                        window.requestNotificationPermission();
-                    }
-                });
+                requestPushButton.addEventListener('click', requestNotificationPermission);
             }
             
             document.getElementById('notificationAllow').addEventListener('click', async function() {
                 document.getElementById('notificationPanel').classList.remove('show');
-                if (window.requestNotificationPermission) {
-                    await window.requestNotificationPermission();
-                }
+                await requestNotificationPermission();
             });
             
             document.getElementById('notificationLater').addEventListener('click', function() {
@@ -1285,15 +1319,7 @@ Luca García,32,Madrid,68000"></textarea>
             
             const manageNotificationsBtn = document.getElementById('manageNotifications');
             if (manageNotificationsBtn) {
-                manageNotificationsBtn.addEventListener('click', function() {
-                    if (Notification.permission === 'granted') {
-                        showMessage('Уведомления уже включены. Для отключения зайдите в настройки браузера.', 'info');
-                    } else {
-                        if (window.requestNotificationPermission) {
-                            window.requestNotificationPermission();
-                        }
-                    }
-                });
+                manageNotificationsBtn.addEventListener('click', manageNotifications);
             }
             
             // Валидация JSON в реальном времени
@@ -1307,11 +1333,6 @@ Luca García,32,Madrid,68000"></textarea>
             });
             
             updateConvertButtonText();
-            
-            // Сделаем функции доступными глобально для Firebase модуля
-            window.trackConversion = trackConversion;
-            window.requestNotificationPermission = requestNotificationPermission;
-            window.showMessage = showMessage;
         }
 
         function updateConvertButtonText() {
@@ -1507,9 +1528,7 @@ Luca García,32,Madrid,68000"></textarea>
                 const downloadSection = document.getElementById('downloadSection');
                 downloadSection.style.display = 'block';
 
-                if (window.trackConversion) {
-                    window.trackConversion('json_to_excel', currentFormat, data.length);
-                }
+                trackConversion('json_to_excel', currentFormat, data.length);
 
                 if (currentFormat === 'excel') {
                     downloadAsExcel();
@@ -1644,9 +1663,7 @@ Luca García,32,Madrid,68000"></textarea>
                     link.click();
                     document.body.removeChild(link);
 
-                    if (window.trackConversion) {
-                        window.trackConversion('excel_to_json', 'json', jsonData.length);
-                    }
+                    trackConversion('excel_to_json', 'json', jsonData.length);
 
                     showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей в JSON!`, 'success');
                     
@@ -1713,9 +1730,7 @@ Luca García,32,Madrid,68000"></textarea>
                 link.click();
                 document.body.removeChild(link);
 
-                if (window.trackConversion) {
-                    window.trackConversion('csv_to_json', 'json', jsonData.length);
-                }
+                trackConversion('csv_to_json', 'json', jsonData.length);
 
                 showMessage(messageDiv, `Успешно конвертировано ${jsonData.length} записей из CSV в JSON!`, 'success');
 
@@ -1749,19 +1764,6 @@ Luca García,32,Madrid,68000"></textarea>
             
             result.push(current.trim());
             return result;
-        }
-
-        function showMessage(messageDiv, text, type) {
-            if (messageDiv) {
-                messageDiv.innerHTML = text;
-                messageDiv.className = `message ${type}`;
-                messageDiv.style.display = 'block';
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 5000);
-            } else {
-                console.log(`${type}: ${text}`);
-            }
         }
 
         function clearJsonInput() {
